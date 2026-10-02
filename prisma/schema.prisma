@@ -1,0 +1,172 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SessionStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum SourceType {
+  WEBCAM
+  IP_CAMERA
+  VIDEO_FILE
+  RTSP_STREAM
+}
+
+enum VehicleClassification {
+  NORMAL
+  WARNING
+  SPEEDING
+}
+
+enum DetectionEventType {
+  DETECTED
+  SPEED_WARNING
+  SPEEDING
+  SESSION_STARTED
+  SESSION_STOPPED
+}
+
+model User {
+  id                    String                 @id @default(uuid())
+  email                 String                 @unique
+  name                  String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  monitoringSessions    MonitoringSession[]
+  cameraConfigurations  CameraConfiguration[]
+  calibrationProfiles   CalibrationProfile[]
+  speedThresholds       SpeedThreshold[]
+}
+
+model MonitoringSession {
+  id               String             @id @default(uuid())
+  name             String
+  location         String?
+  sourceType       SourceType         @default(WEBCAM)
+  status           SessionStatus      @default(ACTIVE)
+  startedAt        DateTime           @default(now())
+  endedAt          DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  userId           String
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleDetections VehicleDetection[]
+  trafficSummaries TrafficSummary[]
+  savedReports     SavedReport[]
+
+  @@index([userId])
+}
+
+model CameraConfiguration {
+  id         String     @id @default(uuid())
+  name       String
+  sourceType SourceType @default(WEBCAM)
+  sourceUrl  String?
+  resolution String?    @default("1920x1080")
+  frameRate  Int?       @default(30)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CalibrationProfile {
+  id                  String   @id @default(uuid())
+  name                String
+  distanceMeters      Float
+  pixelDistance       Float
+  calibrationMatrixJson String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SpeedThreshold {
+  id             String   @id @default(uuid())
+  name           String
+  speedLimit     Float
+  normalMaximum  Float
+  warningMaximum Float
+  unit           String   @default("mph")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VehicleDetection {
+  id             String                @id @default(uuid())
+  sessionId      String
+  session        MonitoringSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  trackingId     String
+  vehicleType    String                @default("Car")
+  estimatedSpeed Float
+  speedUnit      String                @default("mph")
+  classification VehicleClassification @default(NORMAL)
+  detectedAt     DateTime              @default(now())
+  confidence     Float?
+  boundingBox    Json?
+  snapshotUrl    String?
+  createdAt      DateTime              @default(now())
+  events         DetectionEvent[]
+
+  @@index([sessionId])
+  @@index([trackingId])
+  @@index([detectedAt])
+}
+
+model DetectionEvent {
+  id          String             @id @default(uuid())
+  detectionId String
+  detection   VehicleDetection   @relation(fields: [detectionId], references: [id], onDelete: Cascade)
+  eventType   DetectionEventType @default(DETECTED)
+  createdAt   DateTime           @default(now())
+
+  @@index([detectionId])
+}
+
+model TrafficSummary {
+  id            String            @id @default(uuid())
+  sessionId     String
+  session       MonitoringSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  vehicleCount  Int               @default(0)
+  averageSpeed  Float             @default(0.0)
+  maximumSpeed  Float             @default(0.0)
+  speedingCount Int               @default(0)
+  warningCount  Int               @default(0)
+  normalCount   Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([sessionId])
+}
+
+model SavedReport {
+  id         String            @id @default(uuid())
+  name       String
+  sessionId  String
+  session    MonitoringSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  reportType String            @default("SPEED_AUDIT")
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([sessionId])
+}
