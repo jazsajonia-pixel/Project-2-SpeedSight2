@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { handle } from 'hono/vercel';
+import { handle } from '@hono/vercel';
 import { PrismaClient, VehicleClassification, User } from '@prisma/client';
 import { errorHandler } from './middleware/error';
 import { authMiddleware } from './middleware/auth';
