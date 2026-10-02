@@ -1,5 +1,5 @@
 // This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// learn more about it in the docs: https://pris.ly/d/importing-client
 
 generator client {
   provider = "prisma-client-js"
@@ -41,12 +41,27 @@ model User {
   id                    String                 @id @default(uuid())
   email                 String                 @unique
   name                  String?
+  passwordHash          String
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
+  sessions              Session[]
   monitoringSessions    MonitoringSession[]
   cameraConfigurations  CameraConfiguration[]
   calibrationProfiles   CalibrationProfile[]
   speedThresholds       SpeedThreshold[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([tokenHash])
 }
 
 model MonitoringSession {

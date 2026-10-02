@@ -1,22 +1,26 @@
 import { PrismaClient, SourceType, SessionStatus, VehicleClassification, DetectionEventType } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Seeding demo database...');
 
+  const passwordHash = await bcrypt.hash('Demo12345!', 10);
+
   // Create Demo User
   const demoUser = await prisma.user.upsert({
     where: { email: 'demo@speedsight.local' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'demo@speedsight.local',
       name: 'SpeedSight Demo Operator',
+      passwordHash,
     },
   });
 
   // Create Camera Configuration
-  const demoCamera = await prisma.cameraConfiguration.create({
+  await prisma.cameraConfiguration.create({
     data: {
       userId: demoUser.id,
       name: 'Main St Traffic Pole #12',
@@ -27,7 +31,7 @@ async function main() {
   });
 
   // Create Calibration Profile
-  const demoCalibration = await prisma.calibrationProfile.create({
+  await prisma.calibrationProfile.create({
     data: {
       userId: demoUser.id,
       name: 'Main St Standard 50ft Calibration',
@@ -38,7 +42,7 @@ async function main() {
   });
 
   // Create Speed Threshold
-  const demoThreshold = await prisma.speedThreshold.create({
+  await prisma.speedThreshold.create({
     data: {
       userId: demoUser.id,
       name: 'City Residential Standard (30 MPH)',

@@ -4,11 +4,21 @@ export const sessionStatusSchema = z.enum(['ACTIVE', 'PAUSED', 'COMPLETED']);
 export const sourceTypeSchema = z.enum(['WEBCAM', 'IP_CAMERA', 'VIDEO_FILE', 'RTSP_STREAM']);
 export const vehicleClassificationSchema = z.enum(['NORMAL', 'WARNING', 'SPEEDING']);
 
+export const registerSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address').toLowerCase(),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email address').toLowerCase(),
+  password: z.string().min(1, 'Password is required'),
+});
+
 export const createSessionSchema = z.object({
   name: z.string().min(1, 'Session name is required'),
   location: z.string().optional(),
   sourceType: sourceTypeSchema.optional(),
-  userId: z.string().optional(),
 });
 
 export const updateSessionSchema = createSessionSchema.partial().extend({
@@ -22,7 +32,6 @@ export const createCameraSchema = z.object({
   sourceUrl: z.string().url().optional().or(z.literal('')),
   resolution: z.string().optional(),
   frameRate: z.number().int().positive().optional(),
-  userId: z.string().optional(),
 });
 
 export const updateCameraSchema = createCameraSchema.partial();
@@ -32,7 +41,6 @@ export const createCalibrationSchema = z.object({
   distanceMeters: z.number().positive('Distance must be positive'),
   pixelDistance: z.number().positive('Pixel distance must be positive'),
   calibrationMatrixJson: z.string().optional(),
-  userId: z.string().optional(),
 });
 
 export const updateCalibrationSchema = createCalibrationSchema.partial();
@@ -44,7 +52,6 @@ export const createSpeedThresholdSchema = z
     normalMaximum: z.number().positive(),
     warningMaximum: z.number().positive(),
     unit: z.string().default('mph'),
-    userId: z.string().optional(),
   })
   .refine((data) => data.normalMaximum < data.warningMaximum, {
     message: 'normalMaximum must be strictly less than warningMaximum',
@@ -57,7 +64,6 @@ export const updateSpeedThresholdSchema = z.object({
   normalMaximum: z.number().positive().optional(),
   warningMaximum: z.number().positive().optional(),
   unit: z.string().optional(),
-  userId: z.string().optional(),
 });
 
 export const detectionQuerySchema = z.object({
