@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "prisma generate && tsc -b && vite build",
+    "postinstall": "prisma generate",
     "preview": "vite preview",
     "test": "vitest run"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.3",
+    "@prisma/client": "^5.22.0",
     "@tanstack/react-query": "^5.67.2",
     "bcryptjs": "^3.0.3",
     "hono": "^4.13.12",
@@ -21,7 +24,6 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@prisma/client": "^5.22.0",
     "@tailwindcss/vite": "^4.0.9",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
