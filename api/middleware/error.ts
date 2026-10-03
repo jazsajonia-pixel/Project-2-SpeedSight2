@@ -17,7 +17,7 @@ export const errorHandler = (err: Error, c: Context) => {
       {
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'Invalid request data',
+          message: err.errors[0]?.message || 'Invalid request data',
           details: err.errors,
         },
       },
@@ -29,7 +29,7 @@ export const errorHandler = (err: Error, c: Context) => {
     {
       error: {
         code: 'INTERNAL_SERVER_ERROR',
-        message: err.message || 'An unexpected error occurred',
+        message: 'An internal server error occurred',
       },
     },
     500

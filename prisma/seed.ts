@@ -1,7 +1,6 @@
-import { PrismaClient, SourceType, SessionStatus, VehicleClassification, DetectionEventType } from '@prisma/client';
+import { SourceType, SessionStatus, VehicleClassification, DetectionEventType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
+import { prisma } from '../api/utils/prisma';
 
 async function main() {
   console.log('Seeding demo database...');
@@ -24,7 +23,9 @@ async function main() {
     data: {
       userId: demoUser.id,
       name: 'Main St Traffic Pole #12',
-      sourceType: SourceType.WEBCAM,
+      description: 'Northbound traffic pole camera configuration',
+      sourceType: SourceType.CAMERA,
+      processingQuality: 'High',
       resolution: '1920x1080',
       frameRate: 60,
     },
@@ -35,9 +36,9 @@ async function main() {
     data: {
       userId: demoUser.id,
       name: 'Main St Standard 50ft Calibration',
-      distanceMeters: 15.24,
-      pixelDistance: 450.0,
-      calibrationMatrixJson: JSON.stringify({ scaleRatio: 12.4, angle: 15 }),
+      knownDistance: 15.24,
+      distanceUnit: 'm',
+      calibrationData: { scaleRatio: 12.4, angle: 15 },
     },
   });
 
@@ -46,7 +47,6 @@ async function main() {
     data: {
       userId: demoUser.id,
       name: 'City Residential Standard (30 MPH)',
-      speedLimit: 30.0,
       normalMaximum: 30.0,
       warningMaximum: 35.0,
       unit: 'mph',
@@ -58,8 +58,7 @@ async function main() {
     data: {
       userId: demoUser.id,
       name: 'Main St & 4th Ave Intersection',
-      location: 'Northbound Traffic',
-      sourceType: SourceType.WEBCAM,
+      description: 'Northbound Traffic Monitoring',
       status: SessionStatus.ACTIVE,
     },
   });

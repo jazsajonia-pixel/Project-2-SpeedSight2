@@ -1,7 +1,16 @@
 import { z } from 'zod';
 
-export const sessionStatusSchema = z.enum(['ACTIVE', 'PAUSED', 'COMPLETED']);
-export const sourceTypeSchema = z.enum(['WEBCAM', 'IP_CAMERA', 'VIDEO_FILE', 'RTSP_STREAM']);
+export const sessionStatusSchema = z.enum([
+  'DRAFT',
+  'READY',
+  'ACTIVE',
+  'PAUSED',
+  'COMPLETED',
+  'ARCHIVED',
+]);
+
+export const sourceTypeSchema = z.enum(['CAMERA', 'VIDEO', 'DEMO']);
+
 export const vehicleClassificationSchema = z.enum(['NORMAL', 'WARNING', 'SPEEDING']);
 
 export const registerSchema = z.object({
@@ -17,30 +26,31 @@ export const loginSchema = z.object({
 
 export const createSessionSchema = z.object({
   name: z.string().min(1, 'Session name is required'),
-  location: z.string().optional(),
-  sourceType: sourceTypeSchema.optional(),
+  description: z.string().optional(),
+  status: sessionStatusSchema.optional().default('DRAFT'),
 });
 
 export const updateSessionSchema = createSessionSchema.partial().extend({
-  status: sessionStatusSchema.optional(),
+  startedAt: z.string().datetime().optional(),
   endedAt: z.string().datetime().optional(),
 });
 
 export const createCameraSchema = z.object({
   name: z.string().min(1, 'Camera name is required'),
-  sourceType: sourceTypeSchema.optional(),
-  sourceUrl: z.string().url().optional().or(z.literal('')),
-  resolution: z.string().optional(),
-  frameRate: z.number().int().positive().optional(),
+  description: z.string().optional(),
+  sourceType: sourceTypeSchema.optional().default('CAMERA'),
+  processingQuality: z.string().optional().default('High'),
+  resolution: z.string().optional().default('1920x1080'),
+  frameRate: z.number().int().positive().optional().default(30),
 });
 
 export const updateCameraSchema = createCameraSchema.partial();
 
 export const createCalibrationSchema = z.object({
   name: z.string().min(1, 'Profile name is required'),
-  distanceMeters: z.number().positive('Distance must be positive'),
-  pixelDistance: z.number().positive('Pixel distance must be positive'),
-  calibrationMatrixJson: z.string().optional(),
+  knownDistance: z.number().positive('Distance must be positive'),
+  distanceUnit: z.string().optional().default('m'),
+  calibrationData: z.any().optional(),
 });
 
 export const updateCalibrationSchema = createCalibrationSchema.partial();
@@ -48,7 +58,6 @@ export const updateCalibrationSchema = createCalibrationSchema.partial();
 export const createSpeedThresholdSchema = z
   .object({
     name: z.string().min(1, 'Threshold profile name is required'),
-    speedLimit: z.number().positive(),
     normalMaximum: z.number().positive(),
     warningMaximum: z.number().positive(),
     unit: z.string().default('mph'),
@@ -58,13 +67,25 @@ export const createSpeedThresholdSchema = z
     path: ['normalMaximum'],
   });
 
-export const updateSpeedThresholdSchema = z.object({
-  name: z.string().optional(),
-  speedLimit: z.number().positive().optional(),
-  normalMaximum: z.number().positive().optional(),
-  warningMaximum: z.number().positive().optional(),
-  unit: z.string().optional(),
-});
+export const updateSpeedThresholdSchema = z
+  .object({
+    name: z.string().optional(),
+    normalMaximum: z.number().positive().optional(),
+    warningMaximum: z.number().positive().optional(),
+    unit: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.normalMaximum !== undefined && data.warningMaximum !== undefined) {
+        return data.normalMaximum < data.warningMaximum;
+      }
+      return true;
+    },
+    {
+      message: 'normalMaximum must be strictly less than warningMaximum',
+      path: ['normalMaximum'],
+    }
+  );
 
 export const detectionQuerySchema = z.object({
   sessionId: z.string().optional(),

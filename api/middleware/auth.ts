@@ -1,8 +1,7 @@
 import { Context, Next } from 'hono';
-import { PrismaClient, User } from '@prisma/client';
+import { User } from '@prisma/client';
+import { prisma } from '../utils/prisma';
 import { getSessionCookie, hashSessionToken } from '../utils/auth';
-
-const prisma = new PrismaClient();
 
 export type AuthContext = {
   authenticatedUser: User;
