@@ -1,3 +1,9 @@
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
 const BASE_URL = '/api';
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
@@ -17,9 +23,30 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export const authApi = {
+  register: (data: { name: string; email: string; password: string }) =>
+    fetchJson<{ user: AuthUser }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  login: (data: { email: string; password: string }) =>
+    fetchJson<{ user: AuthUser }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  logout: () =>
+    fetchJson<{ message: string }>('/auth/logout', {
+      method: 'POST',
+    }),
+
+  getCurrentUser: () => fetchJson<{ user: AuthUser }>('/auth/me'),
+};
+
 export const api = {
   // Health
-  getHealth: () => fetchJson<{ status: string; database: string }>('/health'),
+  getHealth: () => fetchJson<{ status: string; service: string; database: string; timestamp: string }>('/health'),
 
   // Sessions
   getSessions: () => fetchJson<{ data: any[] }>('/sessions'),
@@ -57,6 +84,11 @@ export const api = {
 
   // Speed Thresholds
   getSpeedThresholds: () => fetchJson<{ data: any[] }>('/speed-thresholds'),
+  createSpeedThreshold: (data: any) =>
+    fetchJson<{ data: any }>('/speed-thresholds', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 
   // Detections
   getDetections: (params?: Record<string, string>) => {

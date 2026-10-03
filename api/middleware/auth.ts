@@ -1,8 +1,7 @@
 import { Context, Next } from 'hono';
-import { PrismaClient, User } from '@prisma/client';
-import { getSessionCookie, hashSessionToken } from '../utils/auth';
-
-const prisma = new PrismaClient();
+import { User } from '@prisma/client';
+import { prisma } from '../utils/prisma';
+import { getSessionCookie, hashSessionToken, clearSessionCookie } from '../utils/auth';
 
 export type AuthContext = {
   authenticatedUser: User;
@@ -23,7 +22,8 @@ export async function authMiddleware(c: Context, next: Next) {
     include: { user: true },
   });
 
-  if (!session || session.expiresAt < new Date()) {
+  if (!session || session.expiresAt <= new Date()) {
+    clearSessionCookie(c);
     if (session) {
       await prisma.session.delete({ where: { id: session.id } }).catch(() => {});
     }

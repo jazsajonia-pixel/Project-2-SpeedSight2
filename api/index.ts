@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { handle } from '@hono/vercel';
-import { PrismaClient, VehicleClassification, User } from '@prisma/client';
+import { VehicleClassification, User } from '@prisma/client';
+import { prisma } from './utils/prisma';
 import { errorHandler } from './middleware/error';
 import { authMiddleware } from './middleware/auth';
 import {
@@ -33,7 +34,6 @@ type Variables = {
   sessionId: string;
 };
 
-const prisma = new PrismaClient();
 export const app = new Hono<{ Variables: Variables }>().basePath('/api');
 
 app.onError(errorHandler);
@@ -86,7 +86,6 @@ app.post('/auth/register', async (c) => {
     },
   });
 
-  // Create session upon registration
   const token = generateSessionToken();
   const tokenHash = hashSessionToken(token);
   const expiresAt = new Date();
@@ -195,7 +194,7 @@ app.get('/auth/me', async (c) => {
 });
 
 // ----------------------------------------------------
-// Protected API Routes (Requires Authentication)
+// Protected API Routes Middleware
 // ----------------------------------------------------
 app.use('/sessions/*', authMiddleware);
 app.use('/sessions', authMiddleware);
@@ -212,7 +211,7 @@ app.use('/reports/*', authMiddleware);
 app.use('/reports', authMiddleware);
 
 // ----------------------------------------------------
-// Monitoring Sessions API
+// Monitoring Sessions CRUD
 // ----------------------------------------------------
 app.get('/sessions', async (c) => {
   const user = c.get('authenticatedUser');
@@ -244,8 +243,8 @@ app.post('/sessions', async (c) => {
   const session = await prisma.monitoringSession.create({
     data: {
       name: parsed.name,
-      location: parsed.location,
-      sourceType: parsed.sourceType,
+      description: parsed.description,
+      status: parsed.status,
       userId: user.id,
     },
   });
@@ -290,7 +289,7 @@ app.delete('/sessions/:id', async (c) => {
 });
 
 // ----------------------------------------------------
-// Camera Configurations API
+// Camera Configurations CRUD
 // ----------------------------------------------------
 app.get('/cameras', async (c) => {
   const user = c.get('authenticatedUser');
@@ -362,7 +361,7 @@ app.delete('/cameras/:id', async (c) => {
 });
 
 // ----------------------------------------------------
-// Calibration Profiles API
+// Calibration Profiles CRUD
 // ----------------------------------------------------
 app.get('/calibrations', async (c) => {
   const user = c.get('authenticatedUser');
@@ -434,7 +433,7 @@ app.delete('/calibrations/:id', async (c) => {
 });
 
 // ----------------------------------------------------
-// Speed Thresholds API
+// Speed Thresholds CRUD
 // ----------------------------------------------------
 app.get('/speed-thresholds', async (c) => {
   const user = c.get('authenticatedUser');
@@ -482,18 +481,19 @@ app.patch('/speed-thresholds/:id', async (c) => {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Speed threshold profile not found' } }, 404);
   }
 
-  if (parsed.normalMaximum !== undefined && parsed.warningMaximum !== undefined) {
-    if (parsed.normalMaximum >= parsed.warningMaximum) {
-      return c.json(
-        {
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'normalMaximum must be strictly less than warningMaximum',
-          },
+  const normalMax = parsed.normalMaximum ?? existing.normalMaximum;
+  const warningMax = parsed.warningMaximum ?? existing.warningMaximum;
+
+  if (normalMax >= warningMax) {
+    return c.json(
+      {
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'normalMaximum must be strictly less than warningMaximum',
         },
-        400
-      );
-    }
+      },
+      400
+    );
   }
 
   const threshold = await prisma.speedThreshold.update({
@@ -520,7 +520,7 @@ app.delete('/speed-thresholds/:id', async (c) => {
 });
 
 // ----------------------------------------------------
-// Vehicle Detections API
+// Vehicle Detections API (with Date Range Filtering)
 // ----------------------------------------------------
 app.get('/detections', async (c) => {
   const user = c.get('authenticatedUser');
@@ -529,9 +529,16 @@ app.get('/detections', async (c) => {
   const where: any = {
     session: { userId: user.id },
   };
+
   if (query.sessionId) where.sessionId = query.sessionId;
   if (query.classification) where.classification = query.classification;
   if (query.vehicleType) where.vehicleType = query.vehicleType;
+
+  if (query.from || query.to) {
+    where.detectedAt = {};
+    if (query.from) where.detectedAt.gte = new Date(query.from);
+    if (query.to) where.detectedAt.lte = new Date(query.to);
+  }
 
   const detections = await prisma.vehicleDetection.findMany({
     where,
