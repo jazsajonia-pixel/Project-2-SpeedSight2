@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { handle } from '@hono/vercel';
 import { PrismaClient, VehicleClassification, User } from '@prisma/client';
 import { errorHandler } from './middleware/error';
 import { authMiddleware } from './middleware/auth';
@@ -33,7 +34,7 @@ type Variables = {
 };
 
 const prisma = new PrismaClient();
-const app = new Hono<{ Variables: Variables }>().basePath('/api');
+export const app = new Hono<{ Variables: Variables }>().basePath('/api');
 
 app.onError(errorHandler);
 
@@ -648,4 +649,10 @@ app.delete('/reports/:id', async (c) => {
   return c.json({ data: { id, deleted: true } });
 });
 
-export default app;
+export const GET = handle(app);
+export const POST = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);
+export const PUT = handle(app);
+
+export default handle(app);
