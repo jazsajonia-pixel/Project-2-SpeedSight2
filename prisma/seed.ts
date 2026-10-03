@@ -2,12 +2,6 @@ import { SourceType, SessionStatus, VehicleClassification, DetectionEventType } 
 import bcrypt from 'bcryptjs';
 import { prisma } from '../api/utils/prisma';
 
-/**
- * Upserts the demo operator and creates sample monitoring data and configuration.
- * Each run resets the demo password and adds new related records.
- *
- * @returns A promise that resolves when all demo records have been written.
- */
 async function main() {
   console.log('Seeding demo database...');
 

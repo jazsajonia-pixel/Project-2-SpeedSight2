@@ -1,4 +1,18 @@
 export type SpeedClassification = 'normal' | 'warning' | 'speeding';
+export type VehicleClassification = 'NORMAL' | 'WARNING' | 'SPEEDING';
+
+export interface VehicleDetection {
+  id: string;
+  sessionId: string;
+  trackingId: string;
+  vehicleType: string;
+  estimatedSpeed: number;
+  speedUnit: string;
+  classification: VehicleClassification;
+  confidence: number;
+  boundingBox: any;
+  detectedAt: string;
+}
 
 export interface Detection {
   id: string;
