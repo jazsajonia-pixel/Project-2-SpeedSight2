@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { app } from '../index';
+import { app } from '../index.js';
 
 describe('API Route Security & Health Verification', () => {
   it('GET /api/health returns 200 OK with expected JSON structure', async () => {
