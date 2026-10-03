@@ -1,13 +1,7 @@
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-}
-
-const BASE_URL = '/api';
+import { VehicleDetection, VehicleClassification } from '../types';
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${url}`, {
+  const res = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
@@ -16,89 +10,161 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   });
 
   if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody.error?.message || `HTTP error! status: ${res.status}`);
+    let errorMessage = `HTTP error ${res.status}`;
+    try {
+      const errData = await res.json();
+      if (errData.error?.message) {
+        errorMessage = errData.error.message;
+      }
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMessage);
   }
 
   return res.json();
 }
 
-export const authApi = {
-  register: (data: { name: string; email: string; password: string }) =>
-    fetchJson<{ user: AuthUser }>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  login: (data: { email: string; password: string }) =>
-    fetchJson<{ user: AuthUser }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  logout: () =>
-    fetchJson<{ message: string }>('/auth/logout', {
-      method: 'POST',
-    }),
-
-  getCurrentUser: () => fetchJson<{ user: AuthUser }>('/auth/me'),
-};
-
 export const api = {
   // Health
-  getHealth: () => fetchJson<{ status: string; service: string; database: string; timestamp: string }>('/health'),
+  async getHealth() {
+    return fetchJson<{ status: string; service: string; database: string; timestamp: string }>('/api/health');
+  },
+
+  // Auth
+  async register(data: any) {
+    return fetchJson<{ user: any }>('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async login(data: any) {
+    return fetchJson<{ user: any }>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async logout() {
+    return fetchJson<{ message: string }>('/api/auth/logout', {
+      method: 'POST',
+    });
+  },
+
+  async getCurrentUser() {
+    return fetchJson<{ user: any }>('/api/auth/me');
+  },
 
   // Sessions
-  getSessions: () => fetchJson<{ data: any[] }>('/sessions'),
-  getSession: (id: string) => fetchJson<{ data: any }>(`/sessions/${id}`),
-  createSession: (data: any) =>
-    fetchJson<{ data: any }>('/sessions', {
+  async getSessions() {
+    return fetchJson<{ data: any[] }>('/api/sessions');
+  },
+
+  async getSession(id: string) {
+    return fetchJson<{ data: any }>(`/api/sessions/${id}`);
+  },
+
+  async createSession(data: { name: string; description?: string; status?: string }) {
+    return fetchJson<{ data: any }>('/api/sessions', {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
-  updateSession: (id: string, data: any) =>
-    fetchJson<{ data: any }>(`/sessions/${id}`, {
+    });
+  },
+
+  async updateSession(id: string, data: any) {
+    return fetchJson<{ data: any }>(`/api/sessions/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
-    }),
-  deleteSession: (id: string) =>
-    fetchJson<{ data: any }>(`/sessions/${id}`, {
+    });
+  },
+
+  async deleteSession(id: string) {
+    return fetchJson<{ data: any }>(`/api/sessions/${id}`, {
       method: 'DELETE',
-    }),
+    });
+  },
 
   // Cameras
-  getCameras: () => fetchJson<{ data: any[] }>('/cameras'),
-  createCamera: (data: any) =>
-    fetchJson<{ data: any }>('/cameras', {
+  async getCameras() {
+    return fetchJson<{ data: any[] }>('/api/cameras');
+  },
+
+  async createCamera(data: any) {
+    return fetchJson<{ data: any }>('/api/cameras', {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
+    });
+  },
+
+  async updateCamera(id: string, data: any) {
+    return fetchJson<{ data: any }>(`/api/cameras/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteCamera(id: string) {
+    return fetchJson<{ data: any }>(`/api/cameras/${id}`, {
+      method: 'DELETE',
+    });
+  },
 
   // Calibrations
-  getCalibrations: () => fetchJson<{ data: any[] }>('/calibrations'),
-  createCalibration: (data: any) =>
-    fetchJson<{ data: any }>('/calibrations', {
+  async getCalibrations() {
+    return fetchJson<{ data: any[] }>('/api/calibrations');
+  },
+
+  async createCalibration(data: any) {
+    return fetchJson<{ data: any }>('/api/calibrations', {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
+    });
+  },
 
   // Speed Thresholds
-  getSpeedThresholds: () => fetchJson<{ data: any[] }>('/speed-thresholds'),
-  createSpeedThreshold: (data: any) =>
-    fetchJson<{ data: any }>('/speed-thresholds', {
+  async getSpeedThresholds() {
+    return fetchJson<{ data: any[] }>('/api/speed-thresholds');
+  },
+
+  async createSpeedThreshold(data: any) {
+    return fetchJson<{ data: any }>('/api/speed-thresholds', {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
+    });
+  },
 
   // Detections
-  getDetections: (params?: Record<string, string>) => {
-    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
-    return fetchJson<{ data: any[] }>(`/detections${query}`);
+  async getDetections(filters?: { sessionId?: string; vehicleType?: string; classification?: string; from?: string; to?: string }) {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v) params.append(k, v);
+      });
+    }
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return fetchJson<{ data: VehicleDetection[] }>(`/api/detections${query}`);
+  },
+
+  async createDetection(data: {
+    sessionId: string;
+    trackingId: string;
+    vehicleType: string;
+    estimatedSpeed: number;
+    speedUnit?: string;
+    classification?: VehicleClassification;
+    confidence: number;
+    boundingBox?: any;
+  }) {
+    return fetchJson<{ data: VehicleDetection }>('/api/detections', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
   // Dashboard Stats
-  getDashboardStats: () =>
-    fetchJson<{
+  async getDashboardStats() {
+    return fetchJson<{
       data: {
         vehiclesDetected: number;
         averageSpeed: number;
@@ -106,13 +172,24 @@ export const api = {
         speedingEvents: number;
         activeSessions: number;
       };
-    }>('/dashboard/stats'),
+    }>('/api/dashboard/stats');
+  },
 
   // Reports
-  getReports: () => fetchJson<{ data: any[] }>('/reports'),
-  createReport: (data: any) =>
-    fetchJson<{ data: any }>('/reports', {
+  async getReports() {
+    return fetchJson<{ data: any[] }>('/api/reports');
+  },
+
+  async createReport(data: any) {
+    return fetchJson<{ data: any }>('/api/reports', {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
+    });
+  },
+
+  async deleteReport(id: string) {
+    return fetchJson<{ data: any }>(`/api/reports/${id}`, {
+      method: 'DELETE',
+    });
+  },
 };

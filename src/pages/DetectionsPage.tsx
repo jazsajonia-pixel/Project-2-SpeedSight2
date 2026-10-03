@@ -5,15 +5,74 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
+import { DataTable, Column } from '../components/ui/DataTable';
+import { useDetectionsQuery } from '../services/queries/useSpeedSightQueries';
 import { DEMO_DETECTIONS } from '../lib/demoData';
 
+interface DetectionRow {
+  id: string;
+  timestamp: string;
+  vehicleId: string;
+  vehicleType: string;
+  estimatedSpeed: string;
+  classification: 'normal' | 'warning' | 'speeding';
+  confidence: string;
+  isRealCv: boolean;
+}
+
 export const DetectionsPage: React.FC = () => {
+  const { data: realDetectionsRes } = useDetectionsQuery();
+
+  const realRows: DetectionRow[] = (realDetectionsRes?.data || []).map((det: any) => ({
+    id: det.id,
+    timestamp: new Date(det.detectedAt).toLocaleTimeString(),
+    vehicleId: det.trackingId,
+    vehicleType: det.vehicleType,
+    estimatedSpeed: det.estimatedSpeed ? `${det.estimatedSpeed} mph` : 'N/A (Phase 5 CV)',
+    classification: (det.classification?.toLowerCase() || 'normal') as any,
+    confidence: det.confidence ? `${(det.confidence * 100).toFixed(0)}%` : 'N/A',
+    isRealCv: true,
+  }));
+
+  const demoRows: DetectionRow[] = DEMO_DETECTIONS.map((det) => ({
+    id: det.id,
+    timestamp: det.timestamp,
+    vehicleId: det.vehicleId,
+    vehicleType: det.vehicleType,
+    estimatedSpeed: `${det.estimatedSpeed} mph`,
+    classification: det.classification,
+    confidence: `${(det.confidence * 100).toFixed(0)}%`,
+    isRealCv: false,
+  }));
+
+  const allRows = [...realRows, ...demoRows];
+
+  const columns: Column<DetectionRow>[] = [
+    {
+      header: 'Source',
+      cell: (row) => (
+        <Badge variant={row.isRealCv ? 'info' : 'neutral'}>
+          {row.isRealCv ? 'Real CV' : 'Demo Data'}
+        </Badge>
+      ),
+    },
+    { header: 'Timestamp', accessorKey: 'timestamp', className: 'font-mono text-slate-500' },
+    { header: 'Vehicle ID', accessorKey: 'vehicleId', className: 'font-semibold text-slate-900' },
+    { header: 'Type', accessorKey: 'vehicleType' },
+    { header: 'Speed', accessorKey: 'estimatedSpeed' },
+    {
+      header: 'Classification',
+      cell: (row) => <Badge classification={row.classification}>{row.classification.toUpperCase()}</Badge>,
+    },
+    { header: 'CV Confidence', accessorKey: 'confidence', className: 'font-mono' },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Detection Records"
-        subtitle="Historical vehicle speed detection audit logs."
-        badge={<Badge variant="info">Demo Log</Badge>}
+        title="Detection Records Audit Log"
+        subtitle="View both real browser computer-vision tracking logs and demo records."
+        badge={<Badge variant="info">All Detection Records</Badge>}
       />
 
       <Card>
@@ -29,47 +88,14 @@ export const DetectionsPage: React.FC = () => {
           />
           <Select
             options={[
-              { label: 'All Sessions', value: 'all' },
-              { label: 'Main St & 4th Ave', value: 'ses-101' },
-              { label: 'Highway 101', value: 'ses-102' },
+              { label: 'All Sources', value: 'all' },
+              { label: 'Real Computer Vision Only', value: 'real' },
+              { label: 'Demo Data Only', value: 'demo' },
             ]}
           />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-700">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-4 font-semibold">Timestamp</th>
-                <th className="py-3 px-4 font-semibold">Vehicle ID</th>
-                <th className="py-3 px-4 font-semibold">Type</th>
-                <th className="py-3 px-4 font-semibold">Estimated Speed</th>
-                <th className="py-3 px-4 font-semibold">Speed Limit</th>
-                <th className="py-3 px-4 font-semibold">Classification</th>
-                <th className="py-3 px-4 font-semibold">Confidence</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {DEMO_DETECTIONS.map((det) => (
-                <tr key={det.id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-3.5 px-4 text-xs font-mono text-slate-500">{det.timestamp}</td>
-                  <td className="py-3.5 px-4 font-semibold text-slate-900">{det.vehicleId}</td>
-                  <td className="py-3.5 px-4 text-xs text-slate-600">{det.vehicleType}</td>
-                  <td className="py-3.5 px-4 font-bold text-slate-900">{det.estimatedSpeed} mph</td>
-                  <td className="py-3.5 px-4 text-xs text-slate-500">{det.speedLimit} mph</td>
-                  <td className="py-3.5 px-4">
-                    <Badge classification={det.classification}>
-                      {det.classification.toUpperCase()}
-                    </Badge>
-                  </td>
-                  <td className="py-3.5 px-4 text-xs font-mono text-slate-600">
-                    {(det.confidence * 100).toFixed(0)}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable columns={columns} data={allRows} keyExtractor={(row) => row.id} />
       </Card>
     </div>
   );

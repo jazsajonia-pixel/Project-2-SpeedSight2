@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { handle } from '@hono/vercel';
-import { VehicleClassification, User } from '@prisma/client';
+import { VehicleClassification, User, DetectionEventType } from '@prisma/client';
 import { prisma } from './utils/prisma';
 import { errorHandler } from './middleware/error';
 import { authMiddleware } from './middleware/auth';
@@ -25,6 +25,7 @@ import {
   updateCalibrationSchema,
   createSpeedThresholdSchema,
   updateSpeedThresholdSchema,
+  createDetectionSchema,
   detectionQuerySchema,
   createReportSchema,
 } from './schemas';
@@ -520,7 +521,7 @@ app.delete('/speed-thresholds/:id', async (c) => {
 });
 
 // ----------------------------------------------------
-// Vehicle Detections API (with Date Range Filtering)
+// Vehicle Detections API (with Date Range Filtering & Persistence)
 // ----------------------------------------------------
 app.get('/detections', async (c) => {
   const user = c.get('authenticatedUser');
@@ -561,6 +562,40 @@ app.get('/detections/:id', async (c) => {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Detection not found' } }, 404);
   }
   return c.json({ data: detection });
+});
+
+app.post('/detections', async (c) => {
+  const user = c.get('authenticatedUser');
+  const body = await c.req.json();
+  const parsed = createDetectionSchema.parse(body);
+
+  const session = await prisma.monitoringSession.findFirst({
+    where: { id: parsed.sessionId, userId: user.id },
+  });
+
+  if (!session) {
+    return c.json({ error: { code: 'NOT_FOUND', message: 'Monitoring session not found' } }, 404);
+  }
+
+  const detection = await prisma.vehicleDetection.create({
+    data: {
+      sessionId: parsed.sessionId,
+      trackingId: parsed.trackingId,
+      vehicleType: parsed.vehicleType,
+      estimatedSpeed: parsed.estimatedSpeed,
+      speedUnit: parsed.speedUnit,
+      classification: parsed.classification,
+      confidence: parsed.confidence,
+      boundingBox: parsed.boundingBox,
+      events: {
+        create: {
+          eventType: DetectionEventType.DETECTED,
+        },
+      },
+    },
+  });
+
+  return c.json({ data: detection }, 201);
 });
 
 // ----------------------------------------------------

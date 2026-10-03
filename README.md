@@ -4,14 +4,20 @@ SpeedSight is a browser-based vehicle speed monitoring and traffic analytics pla
 
 ---
 
-## Current Project Baseline (Phases 1–4)
+## Current Project Baseline (Phases 1–5)
 
 - **Phase 1 & 2:** Frontend baseline with Vite, React 19, TypeScript, Tailwind CSS v4, Lucide icons, and responsive UI navigation shell (`/`, `/login`, `/register`, `/dashboard`, `/monitoring`, `/sessions`, `/detections`, `/analytics`, `/reports`, `/camera-profiles`, `/calibration`, `/settings`).
 - **Phase 3:** PostgreSQL database schema with Prisma ORM v5, seed dataset, and Hono REST API handlers.
 - **Phase 4:** Server-managed HTTP-only session authentication, password hashing (`bcryptjs`), and user resource authorization scoping.
-- **Vercel Serverless Integration:** Production deployment configuration using `@hono/vercel` serverless function handlers in `api/index.ts` and rewrite rules in `vercel.json`.
-
-*Note: Phase 5 (In-Browser Computer Vision Tracking) has NOT been implemented yet.*
+- **Phase 5 (Computer Vision Foundation):**
+  - In-browser local video stream processing using `@tensorflow/tfjs` and `@tensorflow-models/coco-ssd` (MobileNet v2).
+  - Real browser camera access via `navigator.mediaDevices.getUserMedia()` with device enumeration and MediaStream track cleanup.
+  - Local video file playback support for offline testing without server file uploads.
+  - Multi-class vehicle detection (`car`/`sedan`, `truck`, `bus`, `motorcycle`) with real model confidence scores and bounding boxes.
+  - IoU (Intersection over Union) frame-to-frame vehicle tracking ID association.
+  - Controlled throttled detection loop (~15 FPS) preventing UI rendering blockages.
+  - Clear separation between Real CV Data and Demo Mode results.
+  - *Disclaimer: SpeedSight measurements are estimated calculations for analytics purposes and are NOT legally certified speed enforcement.*
 
 ---
 

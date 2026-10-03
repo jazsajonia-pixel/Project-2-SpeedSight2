@@ -87,6 +87,17 @@ export const updateSpeedThresholdSchema = z
     }
   );
 
+export const createDetectionSchema = z.object({
+  sessionId: z.string().min(1, 'Session ID is required'),
+  trackingId: z.string().min(1, 'Tracking ID is required'),
+  vehicleType: z.string().default('Car'),
+  estimatedSpeed: z.number().optional().default(0),
+  speedUnit: z.string().optional().default('mph'),
+  classification: vehicleClassificationSchema.optional().default('NORMAL'),
+  confidence: z.number().min(0).max(1).optional(),
+  boundingBox: z.any().optional(),
+});
+
 export const detectionQuerySchema = z.object({
   sessionId: z.string().optional(),
   classification: vehicleClassificationSchema.optional(),
