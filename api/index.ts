@@ -30,19 +30,22 @@ import {
   createReportSchema,
 } from './schemas';
 
+export const runtime = 'nodejs';
+
 type Variables = {
   authenticatedUser: User;
   sessionId: string;
 };
 
-export const app = new Hono<{ Variables: Variables }>().basePath('/api');
+// Internal API routes app
+const api = new Hono<{ Variables: Variables }>();
 
-app.onError(errorHandler);
+api.onError(errorHandler);
 
 // ----------------------------------------------------
 // Health Endpoint (Public)
 // ----------------------------------------------------
-app.get('/health', async (c) => {
+api.get('/health', async (c) => {
   let dbStatus = 'disconnected';
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -62,7 +65,7 @@ app.get('/health', async (c) => {
 // ----------------------------------------------------
 // Authentication Endpoints
 // ----------------------------------------------------
-app.post('/auth/register', async (c) => {
+api.post('/auth/register', async (c) => {
   const body = await c.req.json();
   const parsed = registerSchema.parse(body);
 
@@ -114,7 +117,7 @@ app.post('/auth/register', async (c) => {
   );
 });
 
-app.post('/auth/login', async (c) => {
+api.post('/auth/login', async (c) => {
   const body = await c.req.json();
   const parsed = loginSchema.parse(body);
 
@@ -155,7 +158,7 @@ app.post('/auth/login', async (c) => {
   });
 });
 
-app.post('/auth/logout', async (c) => {
+api.post('/auth/logout', async (c) => {
   const token = getSessionCookie(c);
   if (token) {
     const tokenHash = hashSessionToken(token);
@@ -165,7 +168,7 @@ app.post('/auth/logout', async (c) => {
   return c.json({ message: 'Logged out successfully' });
 });
 
-app.get('/auth/me', async (c) => {
+api.get('/auth/me', async (c) => {
   const token = getSessionCookie(c);
   if (!token) {
     return c.json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, 401);
@@ -197,24 +200,24 @@ app.get('/auth/me', async (c) => {
 // ----------------------------------------------------
 // Protected API Routes Middleware
 // ----------------------------------------------------
-app.use('/sessions/*', authMiddleware);
-app.use('/sessions', authMiddleware);
-app.use('/cameras/*', authMiddleware);
-app.use('/cameras', authMiddleware);
-app.use('/calibrations/*', authMiddleware);
-app.use('/calibrations', authMiddleware);
-app.use('/speed-thresholds/*', authMiddleware);
-app.use('/speed-thresholds', authMiddleware);
-app.use('/detections/*', authMiddleware);
-app.use('/detections', authMiddleware);
-app.use('/dashboard/stats', authMiddleware);
-app.use('/reports/*', authMiddleware);
-app.use('/reports', authMiddleware);
+api.use('/sessions/*', authMiddleware);
+api.use('/sessions', authMiddleware);
+api.use('/cameras/*', authMiddleware);
+api.use('/cameras', authMiddleware);
+api.use('/calibrations/*', authMiddleware);
+api.use('/calibrations', authMiddleware);
+api.use('/speed-thresholds/*', authMiddleware);
+api.use('/speed-thresholds', authMiddleware);
+api.use('/detections/*', authMiddleware);
+api.use('/detections', authMiddleware);
+api.use('/dashboard/stats', authMiddleware);
+api.use('/reports/*', authMiddleware);
+api.use('/reports', authMiddleware);
 
 // ----------------------------------------------------
 // Monitoring Sessions CRUD
 // ----------------------------------------------------
-app.get('/sessions', async (c) => {
+api.get('/sessions', async (c) => {
   const user = c.get('authenticatedUser');
   const sessions = await prisma.monitoringSession.findMany({
     where: { userId: user.id },
@@ -223,7 +226,7 @@ app.get('/sessions', async (c) => {
   return c.json({ data: sessions });
 });
 
-app.get('/sessions/:id', async (c) => {
+api.get('/sessions/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
   const session = await prisma.monitoringSession.findFirst({
@@ -236,7 +239,7 @@ app.get('/sessions/:id', async (c) => {
   return c.json({ data: session });
 });
 
-app.post('/sessions', async (c) => {
+api.post('/sessions', async (c) => {
   const user = c.get('authenticatedUser');
   const body = await c.req.json();
   const parsed = createSessionSchema.parse(body);
@@ -253,7 +256,7 @@ app.post('/sessions', async (c) => {
   return c.json({ data: session }, 201);
 });
 
-app.patch('/sessions/:id', async (c) => {
+api.patch('/sessions/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
   const body = await c.req.json();
@@ -274,7 +277,7 @@ app.patch('/sessions/:id', async (c) => {
   return c.json({ data: session });
 });
 
-app.delete('/sessions/:id', async (c) => {
+api.delete('/sessions/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
 
@@ -292,7 +295,7 @@ app.delete('/sessions/:id', async (c) => {
 // ----------------------------------------------------
 // Camera Configurations CRUD
 // ----------------------------------------------------
-app.get('/cameras', async (c) => {
+api.get('/cameras', async (c) => {
   const user = c.get('authenticatedUser');
   const cameras = await prisma.cameraConfiguration.findMany({
     where: { userId: user.id },
@@ -301,7 +304,7 @@ app.get('/cameras', async (c) => {
   return c.json({ data: cameras });
 });
 
-app.get('/cameras/:id', async (c) => {
+api.get('/cameras/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
   const camera = await prisma.cameraConfiguration.findFirst({
@@ -313,7 +316,7 @@ app.get('/cameras/:id', async (c) => {
   return c.json({ data: camera });
 });
 
-app.post('/cameras', async (c) => {
+api.post('/cameras', async (c) => {
   const user = c.get('authenticatedUser');
   const body = await c.req.json();
   const parsed = createCameraSchema.parse(body);
@@ -325,7 +328,7 @@ app.post('/cameras', async (c) => {
   return c.json({ data: camera }, 201);
 });
 
-app.patch('/cameras/:id', async (c) => {
+api.patch('/cameras/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
   const body = await c.req.json();
@@ -346,7 +349,7 @@ app.patch('/cameras/:id', async (c) => {
   return c.json({ data: camera });
 });
 
-app.delete('/cameras/:id', async (c) => {
+api.delete('/cameras/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
 
@@ -364,7 +367,7 @@ app.delete('/cameras/:id', async (c) => {
 // ----------------------------------------------------
 // Calibration Profiles CRUD
 // ----------------------------------------------------
-app.get('/calibrations', async (c) => {
+api.get('/calibrations', async (c) => {
   const user = c.get('authenticatedUser');
   const calibrations = await prisma.calibrationProfile.findMany({
     where: { userId: user.id },
@@ -373,7 +376,7 @@ app.get('/calibrations', async (c) => {
   return c.json({ data: calibrations });
 });
 
-app.get('/calibrations/:id', async (c) => {
+api.get('/calibrations/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
   const calibration = await prisma.calibrationProfile.findFirst({
@@ -385,7 +388,7 @@ app.get('/calibrations/:id', async (c) => {
   return c.json({ data: calibration });
 });
 
-app.post('/calibrations', async (c) => {
+api.post('/calibrations', async (c) => {
   const user = c.get('authenticatedUser');
   const body = await c.req.json();
   const parsed = createCalibrationSchema.parse(body);
@@ -397,7 +400,7 @@ app.post('/calibrations', async (c) => {
   return c.json({ data: calibration }, 201);
 });
 
-app.patch('/calibrations/:id', async (c) => {
+api.patch('/calibrations/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
   const body = await c.req.json();
@@ -418,7 +421,7 @@ app.patch('/calibrations/:id', async (c) => {
   return c.json({ data: calibration });
 });
 
-app.delete('/calibrations/:id', async (c) => {
+api.delete('/calibrations/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
 
@@ -436,7 +439,7 @@ app.delete('/calibrations/:id', async (c) => {
 // ----------------------------------------------------
 // Speed Thresholds CRUD
 // ----------------------------------------------------
-app.get('/speed-thresholds', async (c) => {
+api.get('/speed-thresholds', async (c) => {
   const user = c.get('authenticatedUser');
   const thresholds = await prisma.speedThreshold.findMany({
     where: { userId: user.id },
@@ -445,7 +448,7 @@ app.get('/speed-thresholds', async (c) => {
   return c.json({ data: thresholds });
 });
 
-app.get('/speed-thresholds/:id', async (c) => {
+api.get('/speed-thresholds/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
   const threshold = await prisma.speedThreshold.findFirst({
@@ -457,7 +460,7 @@ app.get('/speed-thresholds/:id', async (c) => {
   return c.json({ data: threshold });
 });
 
-app.post('/speed-thresholds', async (c) => {
+api.post('/speed-thresholds', async (c) => {
   const user = c.get('authenticatedUser');
   const body = await c.req.json();
   const parsed = createSpeedThresholdSchema.parse(body);
@@ -469,7 +472,7 @@ app.post('/speed-thresholds', async (c) => {
   return c.json({ data: threshold }, 201);
 });
 
-app.patch('/speed-thresholds/:id', async (c) => {
+api.patch('/speed-thresholds/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
   const body = await c.req.json();
@@ -505,7 +508,7 @@ app.patch('/speed-thresholds/:id', async (c) => {
   return c.json({ data: threshold });
 });
 
-app.delete('/speed-thresholds/:id', async (c) => {
+api.delete('/speed-thresholds/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
 
@@ -521,9 +524,9 @@ app.delete('/speed-thresholds/:id', async (c) => {
 });
 
 // ----------------------------------------------------
-// Vehicle Detections API (with Date Range Filtering & Persistence)
+// Vehicle Detections API
 // ----------------------------------------------------
-app.get('/detections', async (c) => {
+api.get('/detections', async (c) => {
   const user = c.get('authenticatedUser');
   const query = detectionQuerySchema.parse(c.req.query());
 
@@ -551,7 +554,7 @@ app.get('/detections', async (c) => {
   return c.json({ data: detections });
 });
 
-app.get('/detections/:id', async (c) => {
+api.get('/detections/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
   const detection = await prisma.vehicleDetection.findFirst({
@@ -564,7 +567,7 @@ app.get('/detections/:id', async (c) => {
   return c.json({ data: detection });
 });
 
-app.post('/detections', async (c) => {
+api.post('/detections', async (c) => {
   const user = c.get('authenticatedUser');
   const body = await c.req.json();
   const parsed = createDetectionSchema.parse(body);
@@ -601,7 +604,7 @@ app.post('/detections', async (c) => {
 // ----------------------------------------------------
 // Dashboard Statistics API
 // ----------------------------------------------------
-app.get('/dashboard/stats', async (c) => {
+api.get('/dashboard/stats', async (c) => {
   const user = c.get('authenticatedUser');
 
   const vehiclesDetected = await prisma.vehicleDetection.count({
@@ -634,7 +637,7 @@ app.get('/dashboard/stats', async (c) => {
 // ----------------------------------------------------
 // Saved Reports API
 // ----------------------------------------------------
-app.get('/reports', async (c) => {
+api.get('/reports', async (c) => {
   const user = c.get('authenticatedUser');
   const reports = await prisma.savedReport.findMany({
     where: { session: { userId: user.id } },
@@ -644,7 +647,7 @@ app.get('/reports', async (c) => {
   return c.json({ data: reports });
 });
 
-app.get('/reports/:id', async (c) => {
+api.get('/reports/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
   const report = await prisma.savedReport.findFirst({
@@ -657,7 +660,7 @@ app.get('/reports/:id', async (c) => {
   return c.json({ data: report });
 });
 
-app.post('/reports', async (c) => {
+api.post('/reports', async (c) => {
   const user = c.get('authenticatedUser');
   const body = await c.req.json();
   const parsed = createReportSchema.parse(body);
@@ -676,7 +679,7 @@ app.post('/reports', async (c) => {
   return c.json({ data: report }, 201);
 });
 
-app.delete('/reports/:id', async (c) => {
+api.delete('/reports/:id', async (c) => {
   const user = c.get('authenticatedUser');
   const id = c.req.param('id');
 
@@ -691,10 +694,11 @@ app.delete('/reports/:id', async (c) => {
   return c.json({ data: { id, deleted: true } });
 });
 
-export const GET = handle(app);
-export const POST = handle(app);
-export const PATCH = handle(app);
-export const DELETE = handle(app);
-export const PUT = handle(app);
+// Main export app mounting both root and /api for Vercel rewrite resilience
+export const app = new Hono<{ Variables: Variables }>();
+app.onError(errorHandler);
+
+app.route('/', api);
+app.route('/api', api);
 
 export default handle(app);
