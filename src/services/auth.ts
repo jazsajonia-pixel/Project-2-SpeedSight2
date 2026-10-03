@@ -25,5 +25,10 @@ export const authApi = {
     }),
 
   getCurrentUser: (signal?: AbortSignal) =>
-    fetchJson<{ user: AuthUser }>('/auth/me', { signal }).then((res) => res.user),
+    fetchJson<{ user: AuthUser }>('/auth/me', { signal })
+      .then((res) => res.user)
+      .catch((err) => {
+        if (err?.status === 401) return null;
+        throw err;
+      }),
 };

@@ -25,7 +25,7 @@ export const LandingPage: React.FC = () => {
           <span className="text-xl font-bold tracking-tight text-white">SpeedSight</span>
         </div>
         <div className="flex items-center space-x-4">
-          <Link to="/dashboard">
+          <Link to="/login">
             <Button variant="primary" size="sm">
               Launch App
             </Button>
@@ -46,12 +46,12 @@ export const LandingPage: React.FC = () => {
           SpeedSight provides browser-based vehicle monitoring and traffic speed estimation analytics directly from video streams and camera feeds.
         </p>
         <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
-          <Link to="/monitoring">
+          <Link to="/login">
             <Button variant="primary" size="lg" icon={<Video className="w-5 h-5" />}>
               Start Monitoring
             </Button>
           </Link>
-          <Link to="/dashboard">
+          <Link to="/login">
             <Button variant="outline" size="lg" icon={<ArrowRight className="w-5 h-5" />}>
               Try Demo Mode
             </Button>
