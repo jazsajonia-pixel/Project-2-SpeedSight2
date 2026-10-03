@@ -21,7 +21,7 @@ export const errorHandler = (err: Error, c: Context) => {
   }
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    if (err.code === 'P2002' && c.req.path === '/api/auth/register') {
+    if (err.code === 'P2002' && c.req.path.includes('/auth/register')) {
       return c.json(
         { error: { code: 'DUPLICATE_EMAIL', message: 'An account with this email address already exists' } },
         400
