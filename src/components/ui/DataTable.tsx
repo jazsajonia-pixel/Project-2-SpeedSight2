@@ -14,6 +14,12 @@ interface DataTableProps<T> {
   emptyMessage?: string;
 }
 
+/**
+ * Renders rows using custom cell renderers or column accessor keys.
+ *
+ * @param props - Columns, row data, a stable row key extractor, and optional empty message.
+ * @returns A table, or the empty message when there are no rows.
+ */
 export function DataTable<T>({
   columns,
   data,

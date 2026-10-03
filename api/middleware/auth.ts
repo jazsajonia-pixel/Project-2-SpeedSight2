@@ -8,6 +8,14 @@ export type AuthContext = {
   sessionId: string;
 };
 
+/**
+ * Validates the session cookie before allowing a protected request to continue.
+ * Clears invalid or expired cookies and attempts to delete expired sessions.
+ *
+ * @param c - Request context populated with the authenticated user and session ID.
+ * @param next - Next handler to invoke when the session is valid.
+ * @returns A 401 JSON response for missing or invalid sessions, otherwise no value.
+ */
 export async function authMiddleware(c: Context, next: Next) {
   const rawToken = getSessionCookie(c);
 
