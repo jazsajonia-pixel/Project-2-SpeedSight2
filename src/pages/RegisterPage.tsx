@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, User as UserIcon, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Activity, User as UserIcon, Mail, Lock, AlertCircle, PlayCircle } from 'lucide-react';
 import { useAuth } from '../features/auth/AuthContext';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -13,7 +13,7 @@ export const RegisterPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register } = useAuth();
+  const { register, loginAsDemo } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,6 +37,19 @@ export const RegisterPage: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Unable to complete registration. Please check input details.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await loginAsDemo();
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Unable to enter demo mode.');
     } finally {
       setIsSubmitting(false);
     }
@@ -105,6 +118,24 @@ export const RegisterPage: React.FC = () => {
             {isSubmitting ? 'Creating Account...' : 'Register Account'}
           </Button>
         </form>
+
+        <div className="relative flex py-1 items-center">
+          <div className="flex-grow border-t border-slate-700"></div>
+          <span className="flex-shrink mx-3 text-xs text-slate-500">OR</span>
+          <div className="flex-grow border-t border-slate-700"></div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleDemoLogin}
+          disabled={isSubmitting}
+          className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-950/40"
+          size="lg"
+        >
+          <PlayCircle className="w-4 h-4 mr-2" />
+          Continue as Demo User
+        </Button>
 
         <div className="pt-2 text-center text-xs text-slate-400">
           Already have an account?{' '}

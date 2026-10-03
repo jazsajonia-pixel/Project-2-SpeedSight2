@@ -7,11 +7,30 @@ export class ApiError extends Error {
 }
 
 export async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`/api${url}`, {
-    ...options,
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+  const signal = options?.signal
+    ? (options.signal.addEventListener('abort', () => controller.abort()), controller.signal)
+    : controller.signal;
+
+  let res: Response;
+  try {
+    res = await fetch(`/api${url}`, {
+      ...options,
+      signal,
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+    });
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new ApiError(504, 'TIMEOUT', 'Request timed out after 6 seconds. Please try again or use Demo Mode.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     const body: Partial<ApiErrorResponse> = await res.json().catch(() => ({}));
