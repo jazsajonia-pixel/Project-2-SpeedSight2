@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { handle } from '@hono/vercel';
 import { VehicleClassification, User, DetectionEventType } from '@prisma/client';
-import { prisma } from './utils/prisma';
-import { errorHandler } from './middleware/error';
-import { authMiddleware } from './middleware/auth';
+import { prisma } from './utils/prisma.js';
+import { errorHandler } from './middleware/error.js';
+import { authMiddleware } from './middleware/auth.js';
 import {
   hashPassword,
   verifyPassword,
@@ -13,7 +13,7 @@ import {
   clearSessionCookie,
   getSessionCookie,
   SESSION_EXPIRATION_DAYS,
-} from './utils/auth';
+} from './utils/auth.js';
 import {
   registerSchema,
   loginSchema,
@@ -28,7 +28,7 @@ import {
   createDetectionSchema,
   detectionQuerySchema,
   createReportSchema,
-} from './schemas';
+} from './schemas/index.js';
 
 export const runtime = 'nodejs';
 
