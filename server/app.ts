@@ -15,6 +15,14 @@ export const app = new Hono<{ Variables: AuthVariables }>().basePath('/api');
 
 app.onError(errorHandler);
 
+// Diagnostic Endpoint (No Prisma / Neon / Auth dependencies)
+app.get('/ping', (c) => {
+  return c.json({
+    status: 'ok',
+    service: 'speedsight-api',
+  });
+});
+
 // Public Health Check Endpoint
 app.get('/health', async (c) => {
   let dbStatus = 'disconnected';
