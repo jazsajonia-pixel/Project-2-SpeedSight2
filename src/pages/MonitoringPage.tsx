@@ -83,7 +83,7 @@ export const MonitoringPage: React.FC = () => {
               />
             }
           >
-            <div className="relative aspect-video bg-slate-950 rounded-xl overflow-hidden flex flex-col justify-between p-4 border border-slate-800">
+            <div className="relative min-h-[400px] aspect-video bg-slate-950 rounded-xl overflow-hidden flex flex-col justify-between p-4 border border-slate-800">
               {/* Camera Status Bar Top */}
               <div className="flex justify-between items-center text-xs text-slate-300 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 backdrop-blur-xs">
                 <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export const MonitoringPage: React.FC = () => {
             </div>
           </Card>
 
-          <Card title="Live Detection Stream" subtitle="Most recent recorded passes">
+          <Card title="Sample Detection Stream" subtitle="Illustrative records only">
             <div className="space-y-2.5 max-h-[320px] overflow-y-auto">
               {DEMO_DETECTIONS.map((det) => (
                 <div

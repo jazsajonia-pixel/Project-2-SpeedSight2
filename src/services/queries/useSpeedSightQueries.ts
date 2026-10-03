@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { SessionInput, DetectionQuery } from '../../types/api';
 import { api } from '../api';
 
 export const useHealthQuery = () => {
@@ -22,7 +23,7 @@ export const useDashboardStatsQuery = () => {
   });
 };
 
-export const useDetectionsQuery = (params?: Record<string, string>) => {
+export const useDetectionsQuery = (params?: DetectionQuery) => {
   return useQuery({
     queryKey: ['detections', params],
     queryFn: () => api.getDetections(params),
@@ -32,7 +33,7 @@ export const useDetectionsQuery = (params?: Record<string, string>) => {
 export const useCreateSessionMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => api.createSession(data),
+    mutationFn: (data: SessionInput) => api.createSession(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },

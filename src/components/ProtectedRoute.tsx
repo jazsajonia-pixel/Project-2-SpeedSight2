@@ -4,7 +4,7 @@ import { useAuth } from '../features/auth/AuthContext';
 import { Activity } from 'lucide-react';
 
 export const ProtectedRoute: React.FC = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, error, retry } = useAuth();
 
   if (isLoading) {
     return (
@@ -15,6 +15,13 @@ export const ProtectedRoute: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  if (error) {
+    return <div className="p-8 text-center" role="alert">
+      <p>Unable to check your session. Please try again.</p>
+      <button className="mt-4 text-blue-600 underline" onClick={retry}>Retry</button>
+    </div>;
   }
 
   if (!user) {

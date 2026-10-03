@@ -4,7 +4,7 @@ export interface Detection {
   id: string;
   timestamp: string;
   vehicleId: string;
-  vehicleType: 'Car' | 'Truck' | 'SUV' | 'Motorcycle' | 'Bus' | 'Van';
+  vehicleType: 'Car' | 'Sedan' | 'Truck' | 'SUV' | 'Motorcycle' | 'Bus' | 'Van';
   estimatedSpeed: number; // in mph or km/h
   speedLimit: number;
   classification: SpeedClassification;

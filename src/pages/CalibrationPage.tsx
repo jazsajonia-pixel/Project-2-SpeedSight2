@@ -20,7 +20,7 @@ export const CalibrationPage: React.FC = () => {
         {/* Interactive Overlay Preview Canvas */}
         <div className="lg:col-span-2">
           <Card title="Calibration Canvas Preview" subtitle="Define physical road markers (A & B)">
-            <div className="relative aspect-video bg-slate-950 rounded-xl overflow-hidden flex flex-col justify-between p-4 border border-slate-800">
+            <div className="relative min-h-[320px] aspect-video bg-slate-950 rounded-xl overflow-hidden flex flex-col justify-between p-4 border border-slate-800">
               {/* Distance Line Indicator */}
               <div className="absolute inset-0 flex items-center justify-center p-8 pointer-events-none">
                 <div className="w-3/4 border-b-2 border-dashed border-amber-400 relative flex items-center justify-between">
@@ -42,13 +42,13 @@ export const CalibrationPage: React.FC = () => {
                   Interactive Calibration Canvas Placeholder
                 </p>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  Drag markers A and B on camera stream to set pixel-to-distance ratio.
+                  Sample markers only. Interactive calibration is planned.
                 </p>
               </div>
 
               <div className="flex justify-between items-center text-xs text-slate-400 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 z-10">
-                <span>Calibration Status: Pre-calibrated (Default Profile)</span>
-                <span className="font-mono text-emerald-400">Ratio: 12.4 px/ft</span>
+                <span>Calibration Status: Demo preview</span>
+                <span className="font-mono text-emerald-400">Sample: 12.4 px/ft</span>
               </div>
             </div>
           </Card>

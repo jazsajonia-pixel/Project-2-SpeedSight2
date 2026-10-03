@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { handle } from '@hono/vercel';
-import { PrismaClient, VehicleClassification, User } from '@prisma/client';
+import { Prisma, VehicleClassification, User } from '@prisma/client';
 import { errorHandler } from './middleware/error';
 import { authMiddleware } from './middleware/auth';
 import {
@@ -14,6 +14,7 @@ import {
   SESSION_EXPIRATION_DAYS,
 } from './utils/auth';
 import {
+  idSchema,
   registerSchema,
   loginSchema,
   createSessionSchema,
@@ -33,10 +34,26 @@ type Variables = {
   sessionId: string;
 };
 
-const prisma = new PrismaClient();
+import { prisma } from './utils/prisma';
 export const app = new Hono<{ Variables: Variables }>().basePath('/api');
 
 app.onError(errorHandler);
+app.notFound((c) => c.json({ error: { code: 'NOT_FOUND', message: 'API route not found' } }, 404));
+app.use('*', async (c, next) => {
+  c.header('Cache-Control', 'no-store');
+  if (['POST', 'PATCH', 'DELETE', 'PUT'].includes(c.req.method)) {
+    const origin = c.req.header('Origin');
+    const expectedOrigin = new URL(process.env.APP_URL || c.req.url).origin;
+    if (origin && origin !== expectedOrigin) {
+      return c.json({ error: { code: 'FORBIDDEN', message: 'Request origin is not allowed' } }, 403);
+    }
+    if (['POST', 'PATCH', 'PUT'].includes(c.req.method) &&
+        c.req.header('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') {
+      return c.json({ error: { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'Use application/json' } }, 415);
+    }
+  }
+  await next();
+});
 
 // ----------------------------------------------------
 // Health Endpoint (Public)
@@ -47,7 +64,7 @@ app.get('/health', async (c) => {
     await prisma.$queryRaw`SELECT 1`;
     dbStatus = 'connected';
   } catch {
-    dbStatus = 'unavailable (dev environment mode)';
+    dbStatus = 'unavailable';
   }
 
   return c.json({
@@ -159,57 +176,27 @@ app.post('/auth/logout', async (c) => {
   const token = getSessionCookie(c);
   if (token) {
     const tokenHash = hashSessionToken(token);
-    await prisma.session.deleteMany({ where: { tokenHash } }).catch(() => {});
+    await prisma.session.deleteMany({ where: { tokenHash } });
   }
   clearSessionCookie(c);
   return c.json({ message: 'Logged out successfully' });
 });
 
-app.get('/auth/me', async (c) => {
-  const token = getSessionCookie(c);
-  if (!token) {
-    return c.json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, 401);
-  }
-
-  const tokenHash = hashSessionToken(token);
-  const session = await prisma.session.findUnique({
-    where: { tokenHash },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    if (session) {
-      await prisma.session.delete({ where: { id: session.id } }).catch(() => {});
-    }
-    clearSessionCookie(c);
-    return c.json({ error: { code: 'UNAUTHORIZED', message: 'Session expired' } }, 401);
-  }
-
-  return c.json({
-    user: {
-      id: session.user.id,
-      name: session.user.name,
-      email: session.user.email,
-    },
-  });
+app.get('/auth/me', authMiddleware, (c) => {
+  const user = c.get('authenticatedUser');
+  return c.json({ user: { id: user.id, name: user.name, email: user.email } });
 });
 
 // ----------------------------------------------------
 // Protected API Routes (Requires Authentication)
 // ----------------------------------------------------
 app.use('/sessions/*', authMiddleware);
-app.use('/sessions', authMiddleware);
 app.use('/cameras/*', authMiddleware);
-app.use('/cameras', authMiddleware);
 app.use('/calibrations/*', authMiddleware);
-app.use('/calibrations', authMiddleware);
 app.use('/speed-thresholds/*', authMiddleware);
-app.use('/speed-thresholds', authMiddleware);
 app.use('/detections/*', authMiddleware);
-app.use('/detections', authMiddleware);
 app.use('/dashboard/stats', authMiddleware);
 app.use('/reports/*', authMiddleware);
-app.use('/reports', authMiddleware);
 
 // ----------------------------------------------------
 // Monitoring Sessions API
@@ -225,7 +212,7 @@ app.get('/sessions', async (c) => {
 
 app.get('/sessions/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
   const session = await prisma.monitoringSession.findFirst({
     where: { id, userId: user.id },
     include: { trafficSummaries: true, vehicleDetections: { take: 20 } },
@@ -244,8 +231,7 @@ app.post('/sessions', async (c) => {
   const session = await prisma.monitoringSession.create({
     data: {
       name: parsed.name,
-      location: parsed.location,
-      sourceType: parsed.sourceType,
+      description: parsed.description,
       userId: user.id,
     },
   });
@@ -255,7 +241,7 @@ app.post('/sessions', async (c) => {
 
 app.patch('/sessions/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
   const body = await c.req.json();
   const parsed = updateSessionSchema.parse(body);
 
@@ -267,7 +253,7 @@ app.patch('/sessions/:id', async (c) => {
   }
 
   const session = await prisma.monitoringSession.update({
-    where: { id },
+    where: { id, userId: user.id },
     data: parsed,
   });
 
@@ -276,7 +262,7 @@ app.patch('/sessions/:id', async (c) => {
 
 app.delete('/sessions/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
 
   const existing = await prisma.monitoringSession.findFirst({
     where: { id, userId: user.id },
@@ -285,7 +271,7 @@ app.delete('/sessions/:id', async (c) => {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Session not found' } }, 404);
   }
 
-  await prisma.monitoringSession.delete({ where: { id } });
+  await prisma.monitoringSession.delete({ where: { id, userId: user.id } });
   return c.json({ data: { id, deleted: true } });
 });
 
@@ -303,7 +289,7 @@ app.get('/cameras', async (c) => {
 
 app.get('/cameras/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
   const camera = await prisma.cameraConfiguration.findFirst({
     where: { id, userId: user.id },
   });
@@ -327,7 +313,7 @@ app.post('/cameras', async (c) => {
 
 app.patch('/cameras/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
   const body = await c.req.json();
   const parsed = updateCameraSchema.parse(body);
 
@@ -339,7 +325,7 @@ app.patch('/cameras/:id', async (c) => {
   }
 
   const camera = await prisma.cameraConfiguration.update({
-    where: { id },
+    where: { id, userId: user.id },
     data: parsed,
   });
 
@@ -348,7 +334,7 @@ app.patch('/cameras/:id', async (c) => {
 
 app.delete('/cameras/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
 
   const existing = await prisma.cameraConfiguration.findFirst({
     where: { id, userId: user.id },
@@ -357,7 +343,7 @@ app.delete('/cameras/:id', async (c) => {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Camera not found' } }, 404);
   }
 
-  await prisma.cameraConfiguration.delete({ where: { id } });
+  await prisma.cameraConfiguration.delete({ where: { id, userId: user.id } });
   return c.json({ data: { id, deleted: true } });
 });
 
@@ -375,7 +361,7 @@ app.get('/calibrations', async (c) => {
 
 app.get('/calibrations/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
   const calibration = await prisma.calibrationProfile.findFirst({
     where: { id, userId: user.id },
   });
@@ -399,7 +385,7 @@ app.post('/calibrations', async (c) => {
 
 app.patch('/calibrations/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
   const body = await c.req.json();
   const parsed = updateCalibrationSchema.parse(body);
 
@@ -411,7 +397,7 @@ app.patch('/calibrations/:id', async (c) => {
   }
 
   const calibration = await prisma.calibrationProfile.update({
-    where: { id },
+    where: { id, userId: user.id },
     data: parsed,
   });
 
@@ -420,7 +406,7 @@ app.patch('/calibrations/:id', async (c) => {
 
 app.delete('/calibrations/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
 
   const existing = await prisma.calibrationProfile.findFirst({
     where: { id, userId: user.id },
@@ -429,7 +415,7 @@ app.delete('/calibrations/:id', async (c) => {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Calibration profile not found' } }, 404);
   }
 
-  await prisma.calibrationProfile.delete({ where: { id } });
+  await prisma.calibrationProfile.delete({ where: { id, userId: user.id } });
   return c.json({ data: { id, deleted: true } });
 });
 
@@ -447,7 +433,7 @@ app.get('/speed-thresholds', async (c) => {
 
 app.get('/speed-thresholds/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
   const threshold = await prisma.speedThreshold.findFirst({
     where: { id, userId: user.id },
   });
@@ -471,7 +457,7 @@ app.post('/speed-thresholds', async (c) => {
 
 app.patch('/speed-thresholds/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
   const body = await c.req.json();
   const parsed = updateSpeedThresholdSchema.parse(body);
 
@@ -482,22 +468,15 @@ app.patch('/speed-thresholds/:id', async (c) => {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Speed threshold profile not found' } }, 404);
   }
 
-  if (parsed.normalMaximum !== undefined && parsed.warningMaximum !== undefined) {
-    if (parsed.normalMaximum >= parsed.warningMaximum) {
-      return c.json(
-        {
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'normalMaximum must be strictly less than warningMaximum',
-          },
-        },
-        400
-      );
-    }
-  }
+  createSpeedThresholdSchema.parse({ ...existing, ...parsed });
 
+  // Compare-and-swap prevents concurrent partial PATCHes from violating the invariant.
   const threshold = await prisma.speedThreshold.update({
-    where: { id },
+    where: {
+      id, userId: user.id,
+      normalMaximum: existing.normalMaximum,
+      warningMaximum: existing.warningMaximum,
+    },
     data: parsed,
   });
 
@@ -506,7 +485,7 @@ app.patch('/speed-thresholds/:id', async (c) => {
 
 app.delete('/speed-thresholds/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
 
   const existing = await prisma.speedThreshold.findFirst({
     where: { id, userId: user.id },
@@ -515,7 +494,7 @@ app.delete('/speed-thresholds/:id', async (c) => {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Speed threshold profile not found' } }, 404);
   }
 
-  await prisma.speedThreshold.delete({ where: { id } });
+  await prisma.speedThreshold.delete({ where: { id, userId: user.id } });
   return c.json({ data: { id, deleted: true } });
 });
 
@@ -526,12 +505,18 @@ app.get('/detections', async (c) => {
   const user = c.get('authenticatedUser');
   const query = detectionQuerySchema.parse(c.req.query());
 
-  const where: any = {
+  const where: Prisma.VehicleDetectionWhereInput = {
     session: { userId: user.id },
   };
   if (query.sessionId) where.sessionId = query.sessionId;
   if (query.classification) where.classification = query.classification;
   if (query.vehicleType) where.vehicleType = query.vehicleType;
+  if (query.from || query.to) {
+    where.detectedAt = {
+      ...(query.from && { gte: new Date(query.from) }),
+      ...(query.to && { lte: new Date(query.to) }),
+    };
+  }
 
   const detections = await prisma.vehicleDetection.findMany({
     where,
@@ -545,7 +530,7 @@ app.get('/detections', async (c) => {
 
 app.get('/detections/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
   const detection = await prisma.vehicleDetection.findFirst({
     where: { id, session: { userId: user.id } },
     include: { session: true, events: true },
@@ -604,7 +589,7 @@ app.get('/reports', async (c) => {
 
 app.get('/reports/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
   const report = await prisma.savedReport.findFirst({
     where: { id, session: { userId: user.id } },
     include: { session: true },
@@ -628,7 +613,7 @@ app.post('/reports', async (c) => {
   }
 
   const report = await prisma.savedReport.create({
-    data: parsed,
+    data: { name: parsed.name, reportType: parsed.reportType, session: { connect: { id: parsed.sessionId, userId: user.id } } },
   });
 
   return c.json({ data: report }, 201);
@@ -636,7 +621,7 @@ app.post('/reports', async (c) => {
 
 app.delete('/reports/:id', async (c) => {
   const user = c.get('authenticatedUser');
-  const id = c.req.param('id');
+  const id = idSchema.parse(c.req.param('id'));
 
   const existing = await prisma.savedReport.findFirst({
     where: { id, session: { userId: user.id } },
@@ -645,7 +630,7 @@ app.delete('/reports/:id', async (c) => {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Report not found' } }, 404);
   }
 
-  await prisma.savedReport.delete({ where: { id } });
+  await prisma.savedReport.delete({ where: { id, session: { userId: user.id } } });
   return c.json({ data: { id, deleted: true } });
 });
 
@@ -654,5 +639,3 @@ export const POST = handle(app);
 export const PATCH = handle(app);
 export const DELETE = handle(app);
 export const PUT = handle(app);
-
-export default handle(app);

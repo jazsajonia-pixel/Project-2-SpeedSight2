@@ -39,15 +39,17 @@ export const MobileNav: React.FC = () => {
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 text-slate-600 hover:text-slate-900 focus:outline-hidden"
+          className="p-2 text-slate-600 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500"
           aria-label="Toggle navigation"
+          aria-expanded={isOpen}
+          aria-controls="mobile-navigation"
         >
           {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
       {isOpen && (
-        <nav className="border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-lg">
+        <nav id="mobile-navigation" className="border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-lg">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             return (

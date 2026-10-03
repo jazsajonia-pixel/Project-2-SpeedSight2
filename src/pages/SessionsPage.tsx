@@ -1,4 +1,5 @@
-import React from 'react';
+import { DataTable } from '../components/ui/DataTable';
+import React, { useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
@@ -8,6 +9,8 @@ import { Input } from '../components/ui/Input';
 import { DEMO_SESSIONS } from '../lib/demoData';
 
 export const SessionsPage: React.FC = () => {
+  const [search, setSearch] = useState('');
+  const rows = DEMO_SESSIONS.filter((row) => `${row.name} ${row.location}`.toLowerCase().includes(search.toLowerCase()));
   return (
     <div className="space-y-6">
       <PageHeader
@@ -24,51 +27,25 @@ export const SessionsPage: React.FC = () => {
       <Card>
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1">
-            <Input icon={<Search className="w-4 h-4" />} placeholder="Search session by name or location..." />
+            <Input aria-label="Search demo sessions" value={search} onChange={(event) => setSearch(event.target.value)} icon={<Search className="w-4 h-4" />} placeholder="Search session by name or location..." />
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-700">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-4 font-semibold">Session Name</th>
-                <th className="py-3 px-4 font-semibold">Date</th>
-                <th className="py-3 px-4 font-semibold">Duration</th>
-                <th className="py-3 px-4 font-semibold">Vehicles</th>
-                <th className="py-3 px-4 font-semibold">Avg Speed</th>
-                <th className="py-3 px-4 font-semibold">Speeding Violations</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
-                <th className="py-3 px-4 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {DEMO_SESSIONS.map((ses) => (
-                <tr key={ses.id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-3.5 px-4 font-semibold text-slate-900">
-                    <div>{ses.name}</div>
-                    <span className="text-xs font-normal text-slate-500">{ses.location}</span>
-                  </td>
-                  <td className="py-3.5 px-4 text-xs font-mono text-slate-600">{ses.date}</td>
-                  <td className="py-3.5 px-4 text-xs font-mono text-slate-600">{ses.duration}</td>
-                  <td className="py-3.5 px-4 font-bold text-slate-900">{ses.vehicleCount}</td>
-                  <td className="py-3.5 px-4 text-slate-900">{ses.averageSpeed} mph</td>
-                  <td className="py-3.5 px-4 font-bold text-rose-600">{ses.speedingEvents}</td>
-                  <td className="py-3.5 px-4">
-                    <Badge variant={ses.status === 'Active' ? 'normal' : 'neutral'}>
+        <DataTable caption="Sessions — sample data" rows={rows} rowKey={(row) => row.id} columns={[
+{ header: 'Session Name', className: 'font-semibold text-slate-900', cell: (ses) => <><div>{ses.name}</div>
+                    <span className="text-xs font-normal text-slate-500">{ses.location}</span></> },
+{ header: 'Date', className: 'text-xs font-mono text-slate-600', cell: (ses) => <>{ses.date}</> },
+{ header: 'Duration', className: 'text-xs font-mono text-slate-600', cell: (ses) => <>{ses.duration}</> },
+{ header: 'Vehicles', className: 'font-bold text-slate-900', cell: (ses) => <>{ses.vehicleCount}</> },
+{ header: 'Avg Speed', className: 'text-slate-900', cell: (ses) => <>{ses.averageSpeed} mph</> },
+{ header: 'Speeding Violations', className: 'font-bold text-rose-600', cell: (ses) => <>{ses.speedingEvents}</> },
+{ header: 'Status', className: '', cell: (ses) => <><Badge variant={ses.status === 'Active' ? 'normal' : 'neutral'}>
                       {ses.status}
-                    </Badge>
-                  </td>
-                  <td className="py-3.5 px-4 text-right space-x-2">
-                    <Button variant="ghost" size="sm">
+                    </Badge></> },
+{ header: 'Actions', className: 'text-right space-x-2', cell: () => <><Button variant="ghost" size="sm">
                       View
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </Button></> }
+]} />
       </Card>
     </div>
   );

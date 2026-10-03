@@ -1,3 +1,4 @@
+import { DataTable } from '../components/ui/DataTable';
 import React from 'react';
 import { FileText, Download, Plus } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -21,47 +22,21 @@ export const ReportsPage: React.FC = () => {
       />
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-700">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-4 font-semibold">Report Title</th>
-                <th className="py-3 px-4 font-semibold">Date</th>
-                <th className="py-3 px-4 font-semibold">Session</th>
-                <th className="py-3 px-4 font-semibold">Vehicles</th>
-                <th className="py-3 px-4 font-semibold">Avg Speed</th>
-                <th className="py-3 px-4 font-semibold">Violations</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
-                <th className="py-3 px-4 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {DEMO_REPORTS.map((rep) => (
-                <tr key={rep.id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-3.5 px-4 font-semibold text-slate-900">
-                    <div className="flex items-center gap-2">
+        <DataTable caption="Reports — sample data" rows={DEMO_REPORTS} rowKey={(row) => row.id} columns={[
+{ header: 'Report Title', className: 'font-semibold text-slate-900', cell: (rep) => <><div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-blue-600" />
                       <span>{rep.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 text-xs font-mono text-slate-500">{rep.date}</td>
-                  <td className="py-3.5 px-4 text-xs text-slate-600 max-w-xs truncate">{rep.sessionName}</td>
-                  <td className="py-3.5 px-4 font-bold text-slate-900">{rep.totalVehicles}</td>
-                  <td className="py-3.5 px-4 text-slate-900">{rep.avgSpeed} mph</td>
-                  <td className="py-3.5 px-4 font-bold text-rose-600">{rep.speedingViolations}</td>
-                  <td className="py-3.5 px-4">
-                    <Badge variant="normal">{rep.status}</Badge>
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <Button variant="outline" size="sm" icon={<Download className="w-3.5 h-3.5" />}>
+                    </div></> },
+{ header: 'Date', className: 'text-xs font-mono text-slate-500', cell: (rep) => <>{rep.date}</> },
+{ header: 'Session', className: 'text-xs text-slate-600 max-w-xs truncate', cell: (rep) => <>{rep.sessionName}</> },
+{ header: 'Vehicles', className: 'font-bold text-slate-900', cell: (rep) => <>{rep.totalVehicles}</> },
+{ header: 'Avg Speed', className: 'text-slate-900', cell: (rep) => <>{rep.avgSpeed} mph</> },
+{ header: 'Violations', className: 'font-bold text-rose-600', cell: (rep) => <>{rep.speedingViolations}</> },
+{ header: 'Status', className: '', cell: (rep) => <><Badge variant="normal">{rep.status}</Badge></> },
+{ header: 'Action', className: 'text-right', cell: () => <><Button variant="outline" size="sm" icon={<Download className="w-3.5 h-3.5" />}>
                       Export
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </Button></> }
+]} />
       </Card>
     </div>
   );

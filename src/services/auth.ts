@@ -1,26 +1,9 @@
+import { ApiError, fetchJson } from './http';
+
 export interface AuthUser {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
-}
-
-const BASE_URL = '/api';
-
-async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${url}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-    ...options,
-  });
-
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody.error?.message || `HTTP error! status: ${res.status}`);
-  }
-
-  return res.json();
 }
 
 export const authApi = {
@@ -41,5 +24,12 @@ export const authApi = {
       method: 'POST',
     }),
 
-  getCurrentUser: () => fetchJson<{ user: AuthUser }>('/auth/me'),
+  getCurrentUser: async (signal?: AbortSignal): Promise<AuthUser | null> => {
+    try {
+      return (await fetchJson<{ user: AuthUser }>('/auth/me', { signal })).user;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) return null;
+      throw error;
+    }
+  },
 };

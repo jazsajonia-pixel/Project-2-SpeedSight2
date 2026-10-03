@@ -1,82 +1,77 @@
 import { z } from 'zod';
+import { SessionStatus, SourceType, VehicleClassification } from '@prisma/client';
 
-export const sessionStatusSchema = z.enum(['ACTIVE', 'PAUSED', 'COMPLETED']);
-export const sourceTypeSchema = z.enum(['WEBCAM', 'IP_CAMERA', 'VIDEO_FILE', 'RTSP_STREAM']);
-export const vehicleClassificationSchema = z.enum(['NORMAL', 'WARNING', 'SPEEDING']);
-
+export const sessionStatusSchema = z.nativeEnum(SessionStatus);
+export const sourceTypeSchema = z.nativeEnum(SourceType);
+export const vehicleClassificationSchema = z.nativeEnum(VehicleClassification);
+export const idSchema = z.string().uuid();
+const name = z.string().trim().min(1).max(200);
+const description = z.string().trim().max(2000);
+const email = z.string().trim().email('Invalid email address').max(254).toLowerCase();
+// bcrypt only processes the first 72 bytes; reject silently truncated passwords.
+const password = z.string().min(1, 'Password is required').refine(
+  (value) => new TextEncoder().encode(value).length <= 72,
+  'Password must be at most 72 UTF-8 bytes',
+);
 export const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address').toLowerCase(),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  name: z.string().trim().min(2).max(100),
+  email,
+  password: z.string().min(8, 'Password must be at least 8 characters').pipe(password),
 });
+export const loginSchema = z.object({ email, password });
 
-export const loginSchema = z.object({
-  email: z.string().email('Invalid email address').toLowerCase(),
-  password: z.string().min(1, 'Password is required'),
-});
-
-export const createSessionSchema = z.object({
-  name: z.string().min(1, 'Session name is required'),
-  location: z.string().optional(),
-  sourceType: sourceTypeSchema.optional(),
-});
-
+const dateTime = z.string().datetime({ offset: true });
+export const createSessionSchema = z.object({ name, description: description.optional() });
 export const updateSessionSchema = createSessionSchema.partial().extend({
   status: sessionStatusSchema.optional(),
-  endedAt: z.string().datetime().optional(),
+  startedAt: dateTime.nullable().optional(),
+  endedAt: dateTime.nullable().optional(),
 });
-
 export const createCameraSchema = z.object({
-  name: z.string().min(1, 'Camera name is required'),
+  name,
+  description: description.optional(),
   sourceType: sourceTypeSchema.optional(),
-  sourceUrl: z.string().url().optional().or(z.literal('')),
-  resolution: z.string().optional(),
-  frameRate: z.number().int().positive().optional(),
+  resolution: z.string().regex(/^\d{2,5}x\d{2,5}$/).optional(),
+  frameRate: z.number().int().positive().max(240).optional(),
+  processingQuality: z.enum(['Low', 'Medium', 'High', 'Ultra']).optional(),
 });
-
 export const updateCameraSchema = createCameraSchema.partial();
 
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+const jsonValue: z.ZodType<JsonValue> = z.lazy(() => z.union([
+  z.string(), z.number().finite(), z.boolean(), z.null(), z.array(jsonValue), z.record(jsonValue),
+]));
 export const createCalibrationSchema = z.object({
-  name: z.string().min(1, 'Profile name is required'),
-  distanceMeters: z.number().positive('Distance must be positive'),
-  pixelDistance: z.number().positive('Pixel distance must be positive'),
-  calibrationMatrixJson: z.string().optional(),
+  name,
+  knownDistance: z.number().finite().positive(),
+  distanceUnit: z.enum(['m', 'ft']).default('m'),
+  calibrationData: z.record(jsonValue).optional(),
 });
-
 export const updateCalibrationSchema = createCalibrationSchema.partial();
 
-export const createSpeedThresholdSchema = z
-  .object({
-    name: z.string().min(1, 'Threshold profile name is required'),
-    speedLimit: z.number().positive(),
-    normalMaximum: z.number().positive(),
-    warningMaximum: z.number().positive(),
-    unit: z.string().default('mph'),
-  })
-  .refine((data) => data.normalMaximum < data.warningMaximum, {
-    message: 'normalMaximum must be strictly less than warningMaximum',
-    path: ['normalMaximum'],
-  });
-
-export const updateSpeedThresholdSchema = z.object({
-  name: z.string().optional(),
-  speedLimit: z.number().positive().optional(),
-  normalMaximum: z.number().positive().optional(),
-  warningMaximum: z.number().positive().optional(),
-  unit: z.string().optional(),
+const thresholdFields = z.object({
+  name,
+  normalMaximum: z.number().finite().nonnegative(),
+  warningMaximum: z.number().finite().positive(),
+  unit: z.enum(['mph', 'km/h']).default('mph'),
 });
-
+export const createSpeedThresholdSchema = thresholdFields.refine(
+  (data) => data.normalMaximum < data.warningMaximum,
+  { message: 'normalMaximum must be strictly less than warningMaximum', path: ['normalMaximum'] },
+);
+export const updateSpeedThresholdSchema = thresholdFields.partial();
 export const detectionQuerySchema = z.object({
-  sessionId: z.string().optional(),
+  sessionId: idSchema.optional(),
   classification: vehicleClassificationSchema.optional(),
-  vehicleType: z.string().optional(),
-  from: z.string().optional(),
-  to: z.string().optional(),
-  limit: z.coerce.number().int().positive().max(500).optional().default(50),
+  vehicleType: name.optional(),
+  from: dateTime.optional(),
+  to: dateTime.optional(),
+  limit: z.coerce.number().int().positive().max(500).default(50),
+}).refine((data) => !data.from || !data.to || new Date(data.from) <= new Date(data.to), {
+  message: 'from must be before or equal to to', path: ['from'],
 });
-
 export const createReportSchema = z.object({
-  name: z.string().min(1, 'Report title is required'),
-  sessionId: z.string().min(1, 'Session ID is required'),
-  reportType: z.string().optional().default('SPEED_AUDIT'),
+  name,
+  sessionId: idSchema,
+  reportType: name.default('SPEED_AUDIT'),
 });
