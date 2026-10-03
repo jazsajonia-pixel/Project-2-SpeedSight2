@@ -1,3 +1,4 @@
+import { DataTable } from '../components/ui/DataTable';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -74,7 +75,7 @@ export const DashboardPage: React.FC = () => {
             subtitle="Simulated real-time camera feed with object detection overlay"
             action={<StatusIndicator status="active" label="SIMULATED FEED" />}
           >
-            <div className="relative aspect-video bg-slate-900 rounded-xl overflow-hidden flex flex-col justify-between p-4 border border-slate-800">
+            <div className="relative min-h-[280px] aspect-video bg-slate-900 rounded-xl overflow-hidden flex flex-col justify-between p-4 border border-slate-800">
               {/* Background Road Graphics Placeholder */}
               <div className="absolute inset-0 opacity-20 pointer-events-none flex items-center justify-center">
                 <div className="w-full h-1/2 border-y-2 border-dashed border-slate-400 transform -rotate-12"></div>
@@ -104,15 +105,15 @@ export const DashboardPage: React.FC = () => {
                   Camera Feed Preview Container
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  Connect camera or start video stream on the Monitoring page.
+                  Camera input is planned; this preview uses sample values.
                 </p>
               </div>
 
               <div className="flex justify-between items-center z-10">
-                <Badge variant="normal">Detection Engine Ready</Badge>
+                <Badge variant="normal">Demo Overlay</Badge>
                 <Link to="/monitoring">
                   <Button size="sm" variant="secondary" icon={<Play className="w-3.5 h-3.5" />}>
-                    Open Live Feed
+                    Open Preview
                   </Button>
                 </Link>
               </div>
@@ -160,7 +161,7 @@ export const DashboardPage: React.FC = () => {
       {/* Recent Detections */}
       <Card
         title="Recent Vehicle Detections"
-        subtitle="Latest estimated speed measurements from active sessions"
+        subtitle="Sample detections — no camera measurements"
         action={
           <Link to="/detections">
             <Button variant="ghost" size="sm" icon={<ArrowRight className="w-3.5 h-3.5" />}>
@@ -169,38 +170,16 @@ export const DashboardPage: React.FC = () => {
           </Link>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-700">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-4 font-semibold">Time</th>
-                <th className="py-3 px-4 font-semibold">Vehicle ID</th>
-                <th className="py-3 px-4 font-semibold">Type</th>
-                <th className="py-3 px-4 font-semibold">Estimated Speed</th>
-                <th className="py-3 px-4 font-semibold">Classification</th>
-                <th className="py-3 px-4 font-semibold">Session</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {DEMO_DETECTIONS.map((det) => (
-                <tr key={det.id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-mono text-slate-500">{det.timestamp}</td>
-                  <td className="py-3 px-4 font-semibold text-slate-900">{det.vehicleId}</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">{det.vehicleType}</td>
-                  <td className="py-3 px-4 font-bold text-slate-900">{det.estimatedSpeed} mph</td>
-                  <td className="py-3 px-4">
-                    <Badge classification={det.classification}>
+        <DataTable caption="Dashboard — sample data" rows={DEMO_DETECTIONS} rowKey={(row) => row.id} columns={[
+{ header: 'Time', className: 'text-xs font-mono text-slate-500', cell: (det) => <>{det.timestamp}</> },
+{ header: 'Vehicle ID', className: 'font-semibold text-slate-900', cell: (det) => <>{det.vehicleId}</> },
+{ header: 'Type', className: 'text-xs text-slate-600', cell: (det) => <>{det.vehicleType}</> },
+{ header: 'Estimated Speed', className: 'font-bold text-slate-900', cell: (det) => <>{det.estimatedSpeed} mph</> },
+{ header: 'Classification', className: '', cell: (det) => <><Badge classification={det.classification}>
                       {det.classification.toUpperCase()}
-                    </Badge>
-                  </td>
-                  <td className="py-3 px-4 text-xs text-slate-500 max-w-xs truncate">
-                    {det.sessionName}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </Badge></> },
+{ header: 'Session', className: 'text-xs text-slate-500 max-w-xs truncate', cell: (det) => <>{det.sessionName}</> }
+]} />
       </Card>
     </div>
   );

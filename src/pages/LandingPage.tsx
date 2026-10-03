@@ -11,9 +11,11 @@ import {
   ArrowRight,
   CheckCircle2,
 } from 'lucide-react';
+import { useAuth } from '../features/auth/AuthContext';
 import { Button } from '../components/ui/Button';
 
 export const LandingPage: React.FC = () => {
+  const { user } = useAuth();
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
       {/* Header */}
@@ -24,10 +26,11 @@ export const LandingPage: React.FC = () => {
           </div>
           <span className="text-xl font-bold tracking-tight text-white">SpeedSight</span>
         </div>
-        <div className="flex items-center space-x-4">
-          <Link to="/dashboard">
+        <div className="flex items-center gap-3">
+          {!user && <Link to="/register" className="text-xs text-blue-400">Register</Link>}
+          <Link to={user ? "/dashboard" : "/login"}>
             <Button variant="primary" size="sm">
-              Launch App
+              {user ? 'Launch App' : 'Login'}
             </Button>
           </Link>
         </div>
@@ -37,13 +40,13 @@ export const LandingPage: React.FC = () => {
       <section className="px-6 lg:px-12 py-20 max-w-6xl mx-auto text-center space-y-8">
         <div className="inline-flex items-center space-x-2 px-3 py-1 bg-blue-950/80 border border-blue-800/60 rounded-full text-blue-400 text-xs font-semibold">
           <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-          <span>Browser-Based Computer Vision Platform</span>
+          <span>Traffic Analytics — Development Preview</span>
         </div>
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
           Measure Traffic. <span className="text-blue-500">Understand Speed.</span>
         </h1>
         <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto">
-          SpeedSight provides browser-based vehicle monitoring and traffic speed estimation analytics directly from video streams and camera feeds.
+          SpeedSight is being built for browser-based traffic monitoring and estimated speed analytics. Explore the sample interface with secure account access.
         </p>
         <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
           <Link to="/monitoring">
@@ -66,9 +69,9 @@ export const LandingPage: React.FC = () => {
       <section className="px-6 lg:px-12 py-16 bg-slate-800/50 border-y border-slate-800">
         <div className="max-w-6xl mx-auto">
           <div className="text-center space-y-3 mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-white">Platform Capabilities</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white">Planned Platform Capabilities</h2>
             <p className="text-slate-400 text-sm max-w-xl mx-auto">
-              Everything required to analyze road traffic velocity and vehicle frequency without server setup.
+              Camera access, computer vision, live monitoring and exports are planned. Current previews use sample data.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -109,7 +112,7 @@ export const LandingPage: React.FC = () => {
       {/* How It Works */}
       <section className="px-6 lg:px-12 py-16 max-w-6xl mx-auto w-full">
         <div className="text-center space-y-3 mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-white">How SpeedSight Works</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-white">Planned Monitoring Workflow</h2>
           <p className="text-slate-400 text-sm">Four simple steps from feed setup to actionable analytics.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -123,7 +126,7 @@ export const LandingPage: React.FC = () => {
       {/* Technology Section */}
       <section className="px-6 lg:px-12 py-16 bg-slate-800/30 border-t border-slate-800">
         <div className="max-w-4xl mx-auto text-center space-y-6">
-          <h2 className="text-2xl font-bold text-white">Modern In-Browser Technology</h2>
+          <h2 className="text-2xl font-bold text-white">Planned In-Browser Technology</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-slate-300 text-sm pt-4">
             <div className="p-4 bg-slate-800 rounded-xl border border-slate-700/60 flex items-center space-x-2">
               <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />

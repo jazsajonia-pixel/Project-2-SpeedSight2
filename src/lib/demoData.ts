@@ -52,7 +52,7 @@ export const DEMO_DETECTIONS: Detection[] = [
     id: 'det-001',
     timestamp: '09:42:15 AM',
     vehicleId: 'VEH-8492',
-    vehicleType: 'Sedan' as any,
+    vehicleType: 'Sedan',
     estimatedSpeed: 42,
     speedLimit: 30,
     classification: 'speeding',

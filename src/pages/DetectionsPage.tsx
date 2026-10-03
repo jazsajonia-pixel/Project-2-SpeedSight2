@@ -1,3 +1,4 @@
+import { DataTable } from '../components/ui/DataTable';
 import React from 'react';
 import { Search } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -36,40 +37,17 @@ export const DetectionsPage: React.FC = () => {
           />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-700">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-4 font-semibold">Timestamp</th>
-                <th className="py-3 px-4 font-semibold">Vehicle ID</th>
-                <th className="py-3 px-4 font-semibold">Type</th>
-                <th className="py-3 px-4 font-semibold">Estimated Speed</th>
-                <th className="py-3 px-4 font-semibold">Speed Limit</th>
-                <th className="py-3 px-4 font-semibold">Classification</th>
-                <th className="py-3 px-4 font-semibold">Confidence</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {DEMO_DETECTIONS.map((det) => (
-                <tr key={det.id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-3.5 px-4 text-xs font-mono text-slate-500">{det.timestamp}</td>
-                  <td className="py-3.5 px-4 font-semibold text-slate-900">{det.vehicleId}</td>
-                  <td className="py-3.5 px-4 text-xs text-slate-600">{det.vehicleType}</td>
-                  <td className="py-3.5 px-4 font-bold text-slate-900">{det.estimatedSpeed} mph</td>
-                  <td className="py-3.5 px-4 text-xs text-slate-500">{det.speedLimit} mph</td>
-                  <td className="py-3.5 px-4">
-                    <Badge classification={det.classification}>
+        <DataTable caption="Detections — sample data" rows={DEMO_DETECTIONS} rowKey={(row) => row.id} columns={[
+{ header: 'Timestamp', className: 'text-xs font-mono text-slate-500', cell: (det) => <>{det.timestamp}</> },
+{ header: 'Vehicle ID', className: 'font-semibold text-slate-900', cell: (det) => <>{det.vehicleId}</> },
+{ header: 'Type', className: 'text-xs text-slate-600', cell: (det) => <>{det.vehicleType}</> },
+{ header: 'Estimated Speed', className: 'font-bold text-slate-900', cell: (det) => <>{det.estimatedSpeed} mph</> },
+{ header: 'Speed Limit', className: 'text-xs text-slate-500', cell: (det) => <>{det.speedLimit} mph</> },
+{ header: 'Classification', className: '', cell: (det) => <><Badge classification={det.classification}>
                       {det.classification.toUpperCase()}
-                    </Badge>
-                  </td>
-                  <td className="py-3.5 px-4 text-xs font-mono text-slate-600">
-                    {(det.confidence * 100).toFixed(0)}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </Badge></> },
+{ header: 'Confidence', className: 'text-xs font-mono text-slate-600', cell: (det) => <>{(det.confidence * 100).toFixed(0)}%</> }
+]} />
       </Card>
     </div>
   );

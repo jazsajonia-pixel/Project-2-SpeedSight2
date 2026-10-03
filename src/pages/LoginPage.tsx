@@ -23,8 +23,8 @@ export const LoginPage: React.FC = () => {
     try {
       await login({ email, password });
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Unable to sign in. Please check your email and password.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to sign in. Please check your email and password.');
     } finally {
       setIsSubmitting(false);
     }
@@ -76,6 +76,7 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 className="absolute right-3 text-slate-400 hover:text-slate-200"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

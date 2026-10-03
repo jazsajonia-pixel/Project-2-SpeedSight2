@@ -1,140 +1,62 @@
-import { PrismaClient, SourceType, SessionStatus, VehicleClassification, DetectionEventType } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { PrismaClient } from '@prisma/client';
+import { hashPassword } from '../api/utils/auth';
 
 const prisma = new PrismaClient();
-
+// Public, development-only fixture credentials. Never seed a production database.
 async function main() {
-  console.log('Seeding demo database...');
-
-  const passwordHash = await bcrypt.hash('Demo12345!', 10);
-
-  // Create Demo User
-  const demoUser = await prisma.user.upsert({
-    where: { email: 'demo@speedsight.local' },
-    update: { passwordHash },
-    create: {
-      email: 'demo@speedsight.local',
-      name: 'SpeedSight Demo Operator',
-      passwordHash,
-    },
+  if (process.env.NODE_ENV === 'production') throw new Error('Demo seed is disabled in production');
+  const passwordHash = await hashPassword('Demo12345!');
+  await prisma.$transaction(async (tx) => {
+    const user = await tx.user.upsert({
+      where: { email: 'demo@speedsight.local' },
+      update: {},
+      create: { id: '00000000-0000-4000-8000-000000000001', email: 'demo@speedsight.local', name: 'Demo Operator (sample data)', passwordHash },
+    });
+    const session = await tx.monitoringSession.upsert({
+      where: { id: '00000000-0000-4000-8000-000000000002' },
+      update: {},
+      create: { id: '00000000-0000-4000-8000-000000000002', userId: user.id,
+        name: 'Demo — Main Street', description: 'Synthetic development fixtures, not camera measurements.',
+        status: 'COMPLETED', startedAt: new Date('2026-01-01T10:00:00Z'), endedAt: new Date('2026-01-01T11:00:00Z') },
+    });
+    await tx.cameraConfiguration.upsert({
+      where: { id: '00000000-0000-4000-8000-000000000003' }, update: {},
+      create: { id: '00000000-0000-4000-8000-000000000003', userId: user.id, name: 'Demo camera configuration',
+        description: 'No physical camera', sourceType: 'DEMO', resolution: '1920x1080', frameRate: 30, processingQuality: 'High' },
+    });
+    await tx.calibrationProfile.upsert({
+      where: { id: '00000000-0000-4000-8000-000000000004' }, update: {},
+      create: { id: '00000000-0000-4000-8000-000000000004', userId: user.id, name: 'Demo distance configuration',
+        knownDistance: 50, distanceUnit: 'ft', calibrationData: { demo: true } },
+    });
+    await tx.speedThreshold.upsert({
+      where: { id: '00000000-0000-4000-8000-000000000005' }, update: {},
+      create: { id: '00000000-0000-4000-8000-000000000005', userId: user.id, name: 'Demo residential thresholds',
+        normalMaximum: 30, warningMaximum: 35, unit: 'mph' },
+    });
+    for (const [index, speed, classification] of [[6, 42, 'SPEEDING'], [7, 33, 'WARNING']] as const) {
+      const id = `00000000-0000-4000-8000-00000000000${index}`;
+      await tx.vehicleDetection.upsert({ where: { id }, update: {}, create: {
+        id, sessionId: session.id, trackingId: `DEMO-${index}`, vehicleType: 'Car', estimatedSpeed: speed,
+        speedUnit: 'mph', classification, detectedAt: new Date(`2026-01-01T10:0${index}:00Z`),
+        // No fabricated confidence, image or bounding box.
+      } });
+      const eventId = `00000000-0000-4000-8000-00000000001${index}`;
+      await tx.detectionEvent.upsert({ where: { id: eventId }, update: {}, create: {
+        id: eventId, detectionId: id, eventType: classification === 'SPEEDING' ? 'SPEEDING' : 'SPEED_WARNING',
+      } });
+    }
+    await tx.trafficSummary.upsert({
+      where: { id: '00000000-0000-4000-8000-000000000008' }, update: {},
+      create: { id: '00000000-0000-4000-8000-000000000008', sessionId: session.id,
+        vehicleCount: 2, averageSpeed: 37.5, maximumSpeed: 42, speedingCount: 1, warningCount: 1, normalCount: 0 },
+    });
+    await tx.savedReport.upsert({
+      where: { id: '00000000-0000-4000-8000-000000000009' }, update: {},
+      create: { id: '00000000-0000-4000-8000-000000000009', sessionId: session.id, name: 'Demo report metadata', reportType: 'SPEED_AUDIT' },
+    });
   });
-
-  // Create Camera Configuration
-  await prisma.cameraConfiguration.create({
-    data: {
-      userId: demoUser.id,
-      name: 'Main St Traffic Pole #12',
-      sourceType: SourceType.WEBCAM,
-      resolution: '1920x1080',
-      frameRate: 60,
-    },
-  });
-
-  // Create Calibration Profile
-  await prisma.calibrationProfile.create({
-    data: {
-      userId: demoUser.id,
-      name: 'Main St Standard 50ft Calibration',
-      distanceMeters: 15.24,
-      pixelDistance: 450.0,
-      calibrationMatrixJson: JSON.stringify({ scaleRatio: 12.4, angle: 15 }),
-    },
-  });
-
-  // Create Speed Threshold
-  await prisma.speedThreshold.create({
-    data: {
-      userId: demoUser.id,
-      name: 'City Residential Standard (30 MPH)',
-      speedLimit: 30.0,
-      normalMaximum: 30.0,
-      warningMaximum: 35.0,
-      unit: 'mph',
-    },
-  });
-
-  // Create Monitoring Session
-  const demoSession = await prisma.monitoringSession.create({
-    data: {
-      userId: demoUser.id,
-      name: 'Main St & 4th Ave Intersection',
-      location: 'Northbound Traffic',
-      sourceType: SourceType.WEBCAM,
-      status: SessionStatus.ACTIVE,
-    },
-  });
-
-  // Create Vehicle Detections
-  const det1 = await prisma.vehicleDetection.create({
-    data: {
-      sessionId: demoSession.id,
-      trackingId: 'VEH-8492',
-      vehicleType: 'Sedan',
-      estimatedSpeed: 42.0,
-      speedUnit: 'mph',
-      classification: VehicleClassification.SPEEDING,
-      confidence: 0.94,
-      boundingBox: { x: 120, y: 240, width: 80, height: 60 },
-    },
-  });
-
-  await prisma.detectionEvent.create({
-    data: {
-      detectionId: det1.id,
-      eventType: DetectionEventType.SPEEDING,
-    },
-  });
-
-  const det2 = await prisma.vehicleDetection.create({
-    data: {
-      sessionId: demoSession.id,
-      trackingId: 'VEH-8491',
-      vehicleType: 'SUV',
-      estimatedSpeed: 33.0,
-      speedUnit: 'mph',
-      classification: VehicleClassification.WARNING,
-      confidence: 0.91,
-      boundingBox: { x: 300, y: 180, width: 90, height: 70 },
-    },
-  });
-
-  await prisma.detectionEvent.create({
-    data: {
-      detectionId: det2.id,
-      eventType: DetectionEventType.SPEED_WARNING,
-    },
-  });
-
-  // Create Traffic Summary
-  await prisma.trafficSummary.create({
-    data: {
-      sessionId: demoSession.id,
-      vehicleCount: 142,
-      averageSpeed: 34.2,
-      maximumSpeed: 54.0,
-      speedingCount: 18,
-      warningCount: 24,
-      normalCount: 100,
-    },
-  });
-
-  // Create Saved Report
-  await prisma.savedReport.create({
-    data: {
-      sessionId: demoSession.id,
-      name: 'Daily Speed Audit - Main St',
-      reportType: 'SPEED_AUDIT',
-    },
-  });
-
-  console.log('Database seed complete!');
+  console.log('Development demo fixtures ready (not real detections).');
 }
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((error) => { console.error(error); process.exitCode = 1; })
+  .finally(() => prisma.$disconnect());

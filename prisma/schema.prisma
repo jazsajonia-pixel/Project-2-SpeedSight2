@@ -11,16 +11,18 @@ datasource db {
 }
 
 enum SessionStatus {
+  DRAFT
+  READY
   ACTIVE
   PAUSED
   COMPLETED
+  ARCHIVED
 }
 
 enum SourceType {
-  WEBCAM
-  IP_CAMERA
-  VIDEO_FILE
-  RTSP_STREAM
+  CAMERA
+  VIDEO
+  DEMO
 }
 
 enum VehicleClassification {
@@ -38,17 +40,17 @@ enum DetectionEventType {
 }
 
 model User {
-  id                    String                 @id @default(uuid())
-  email                 String                 @unique
-  name                  String?
-  passwordHash          String
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  sessions              Session[]
-  monitoringSessions    MonitoringSession[]
-  cameraConfigurations  CameraConfiguration[]
-  calibrationProfiles   CalibrationProfile[]
-  speedThresholds       SpeedThreshold[]
+  id                   String                @id @default(uuid())
+  email                String                @unique
+  name                 String?
+  passwordHash         String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  sessions             Session[]
+  monitoringSessions   MonitoringSession[]
+  cameraConfigurations CameraConfiguration[]
+  calibrationProfiles  CalibrationProfile[]
+  speedThresholds      SpeedThreshold[]
 }
 
 model Session {
@@ -65,49 +67,49 @@ model Session {
 }
 
 model MonitoringSession {
-  id               String             @id @default(uuid())
-  name             String
-  location         String?
-  sourceType       SourceType         @default(WEBCAM)
-  status           SessionStatus      @default(ACTIVE)
-  startedAt        DateTime           @default(now())
-  endedAt          DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  userId           String
-  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String             @id @default(uuid())
+  name              String
+  description       String?
+  status            SessionStatus      @default(DRAFT)
+  startedAt         DateTime?
+  endedAt           DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   vehicleDetections VehicleDetection[]
-  trafficSummaries TrafficSummary[]
-  savedReports     SavedReport[]
+  trafficSummaries  TrafficSummary[]
+  savedReports      SavedReport[]
 
   @@index([userId])
 }
 
 model CameraConfiguration {
-  id         String     @id @default(uuid())
-  name       String
-  sourceType SourceType @default(WEBCAM)
-  sourceUrl  String?
-  resolution String?    @default("1920x1080")
-  frameRate  Int?       @default(30)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  userId     String
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String     @id @default(uuid())
+  name              String
+  sourceType        SourceType @default(CAMERA)
+  description       String?
+  processingQuality String     @default("High")
+  resolution        String?    @default("1920x1080")
+  frameRate         Int?       @default(30)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  userId            String
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model CalibrationProfile {
-  id                  String   @id @default(uuid())
-  name                String
-  distanceMeters      Float
-  pixelDistance       Float
-  calibrationMatrixJson String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  userId              String
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(uuid())
+  name            String
+  knownDistance   Float
+  distanceUnit    String   @default("m")
+  calibrationData Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -115,7 +117,6 @@ model CalibrationProfile {
 model SpeedThreshold {
   id             String   @id @default(uuid())
   name           String
-  speedLimit     Float
   normalMaximum  Float
   warningMaximum Float
   unit           String   @default("mph")

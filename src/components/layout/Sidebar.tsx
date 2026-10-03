@@ -60,7 +60,7 @@ export const Sidebar: React.FC = () => {
       <div className="p-4 border-t border-slate-200">
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600">
           <p className="font-semibold text-slate-900">Demo Environment</p>
-          <p className="mt-0.5">Frontend Phase 2 UI Shell active. All data shown is sample data.</p>
+          <p className="mt-0.5">Sample UI data is separate from your authenticated database records.</p>
         </div>
       </div>
     </aside>

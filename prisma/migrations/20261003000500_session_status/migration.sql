@@ -1,0 +1,3 @@
+ALTER TYPE "SessionStatus" ADD VALUE 'DRAFT';
+ALTER TYPE "SessionStatus" ADD VALUE 'READY';
+ALTER TYPE "SessionStatus" ADD VALUE 'ARCHIVED';

@@ -35,8 +35,8 @@ export const RegisterPage: React.FC = () => {
     try {
       await register({ name, email, password });
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Unable to complete registration. Please check input details.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to complete registration. Please check input details.');
     } finally {
       setIsSubmitting(false);
     }
