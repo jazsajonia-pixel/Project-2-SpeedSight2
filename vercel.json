@@ -1,11 +1,9 @@
 {
-  "functions": {
-    "api/index.ts": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
   "rewrites": [
+    {
+      "source": "/api/ping",
+      "destination": "/api/ping.ts"
+    },
     {
       "source": "/api/(.*)",
       "destination": "/api/index.ts"

@@ -19,6 +19,7 @@ import { StatusIndicator } from '../components/ui/StatusIndicator';
 import { useMonitoringPipeline } from '../hooks/useMonitoringPipeline';
 import { DEMO_DETECTIONS } from '../lib/demoData';
 import { api } from '../services/api';
+import { DISCLAIMER_MESSAGE } from '../utils/speedMath';
 
 export const MonitoringPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -88,7 +89,7 @@ export const MonitoringPage: React.FC = () => {
     <div className="space-y-6">
       <PageHeader
         title="Live Camera & Computer Vision Pipeline"
-        subtitle="Real-time browser vehicle detection and object tracking (COCO-SSD / TensorFlow.js)."
+        subtitle="Real-time browser vehicle detection, tracking, and calibrated speed estimation."
         badge={
           <Badge variant={sourceMode === 'DEMO' ? 'info' : 'normal'}>
             {sourceMode === 'DEMO' ? 'Demo Mode' : 'Browser Computer Vision'}
@@ -144,9 +145,7 @@ export const MonitoringPage: React.FC = () => {
         <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
         <div>
           <p className="font-semibold text-blue-950">In-Browser Local Computer Vision Processing</p>
-          <p className="mt-0.5">
-            Video frames are processed entirely inside your web browser. No camera video streams are recorded or transmitted to Vercel. Speed measurements are strictly estimated and NOT legally certified speed enforcement.
-          </p>
+          <p className="mt-0.5">{DISCLAIMER_MESSAGE}</p>
         </div>
       </div>
 
@@ -192,12 +191,12 @@ export const MonitoringPage: React.FC = () => {
                   <>
                     <div className="absolute top-[30%] left-[20%] border-2 border-emerald-400 bg-emerald-500/10 rounded-xs p-1">
                       <span className="bg-emerald-500 text-slate-950 text-[10px] font-bold px-1 rounded-2xs">
-                        Sedan | DEMO #8492
+                        Sedan | DEMO #8492 | 42 km/h (NORMAL)
                       </span>
                     </div>
                     <div className="absolute top-[50%] left-[60%] border-2 border-rose-500 bg-rose-500/20 rounded-xs p-1">
                       <span className="bg-rose-600 text-white text-[10px] font-bold px-1 rounded-2xs">
-                        SUV | DEMO #8489
+                        SUV | DEMO #8489 | 68 km/h (SPEEDING)
                       </span>
                     </div>
                   </>
@@ -219,14 +218,35 @@ export const MonitoringPage: React.FC = () => {
                     const width = `${vehicle.boundingBox.width * scaleX}%`;
                     const height = `${vehicle.boundingBox.height * scaleY}%`;
 
+                    const speedText =
+                      vehicle.estimatedSpeed > 0
+                        ? `${vehicle.estimatedSpeed} ${vehicle.speedUnit}`
+                        : vehicle.speedQuality === 'UNAVAILABLE'
+                        ? 'Calibration Required'
+                        : 'Calculating...';
+
+                    const borderColor =
+                      vehicle.classification === 'SPEEDING'
+                        ? 'border-rose-500 bg-rose-500/15'
+                        : vehicle.classification === 'WARNING'
+                        ? 'border-amber-400 bg-amber-500/15'
+                        : 'border-blue-400 bg-blue-500/15';
+
+                    const badgeColor =
+                      vehicle.classification === 'SPEEDING'
+                        ? 'bg-rose-600 text-white'
+                        : vehicle.classification === 'WARNING'
+                        ? 'bg-amber-500 text-slate-950 font-bold'
+                        : 'bg-blue-600 text-white';
+
                     return (
                       <div
                         key={vehicle.trackingId}
                         style={{ left, top, width, height }}
-                        className="absolute border-2 border-blue-400 bg-blue-500/15 rounded-2xs transition-all duration-75"
+                        className={`absolute border-2 rounded-2xs transition-all duration-75 ${borderColor}`}
                       >
-                        <span className="absolute -top-6 left-0 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-2xs whitespace-nowrap shadow-xs">
-                          {vehicle.vehicleType} | {vehicle.trackingId} ({(vehicle.confidence * 100).toFixed(0)}%)
+                        <span className={`absolute -top-6 left-0 text-[10px] font-bold px-1.5 py-0.5 rounded-2xs whitespace-nowrap shadow-xs ${badgeColor}`}>
+                          {vehicle.vehicleType} | {vehicle.trackingId} | {speedText} ({vehicle.classification})
                         </span>
                       </div>
                     );
@@ -365,7 +385,7 @@ export const MonitoringPage: React.FC = () => {
           </Card>
 
           {/* Real-time Tracked Vehicles Feed */}
-          <Card title="Tracked Vehicle Feed" subtitle="Real-time model confidence & tracking IDs">
+          <Card title="Tracked Vehicle Feed" subtitle="Real-time speed estimation & quality">
             <div className="space-y-2.5 max-h-[300px] overflow-y-auto">
               {sourceMode === 'DEMO' ? (
                 DEMO_DETECTIONS.slice(0, 4).map((det) => (
@@ -377,9 +397,11 @@ export const MonitoringPage: React.FC = () => {
                       <span className="font-bold text-slate-900 block">
                         {det.vehicleId} ({det.vehicleType})
                       </span>
-                      <span className="text-slate-500 text-[10px]">{det.timestamp}</span>
+                      <span className="text-slate-500 text-[10px]">
+                        {det.estimatedSpeed} mph
+                      </span>
                     </div>
-                    <Badge classification={det.classification}>DEMO</Badge>
+                    <Badge classification={det.classification}>{det.classification}</Badge>
                   </div>
                 ))
               ) : trackedVehicles.length > 0 ? (
@@ -392,11 +414,18 @@ export const MonitoringPage: React.FC = () => {
                       <span className="font-bold text-blue-950 block">
                         {vehicle.trackingId} ({vehicle.vehicleType})
                       </span>
-                      <span className="text-slate-500 text-[10px]">
-                        Conf: {(vehicle.confidence * 100).toFixed(0)}%
+                      <span className="text-slate-600 font-mono text-[11px] block">
+                        {vehicle.estimatedSpeed > 0
+                          ? `${vehicle.estimatedSpeed} ${vehicle.speedUnit}`
+                          : 'Calibration Required'}
+                      </span>
+                      <span className="text-slate-400 text-[10px]">
+                        Quality: {vehicle.speedQuality}
                       </span>
                     </div>
-                    <Badge variant="info">ACTIVE TRACK</Badge>
+                    <Badge classification={vehicle.classification.toLowerCase() as any}>
+                      {vehicle.classification}
+                    </Badge>
                   </div>
                 ))
               ) : (

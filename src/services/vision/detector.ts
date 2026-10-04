@@ -32,7 +32,8 @@ export class VehicleDetector {
   }
 
   public async detectAndTrack(
-    imageElement: HTMLVideoElement | HTMLCanvasElement
+    imageElement: HTMLVideoElement | HTMLCanvasElement,
+    calibration?: any
   ): Promise<TrackedVehicle[]> {
     if (!this.model) return [];
 
@@ -53,7 +54,7 @@ export class VehicleDetector {
           };
         });
 
-      return this.tracker.update(vehicleDetections);
+      return this.tracker.update(vehicleDetections, Date.now(), calibration);
     } catch (err) {
       console.error('Detection frame error:', err);
       return [];

@@ -11,6 +11,7 @@ interface AuthContextType {
   retry: () => void;
   login: (data: { email: string; password: string }) => Promise<void>;
   register: (data: { name: string; email: string; password: string }) => Promise<void>;
+  loginAsDemo: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -36,25 +37,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('speedsight:unauthorized', onUnauthorized);
   }, [client]);
 
-  const refreshUser = async () => {
-    await client.cancelQueries();
-    client.removeQueries({ predicate: (q) => q.queryKey[0] !== CURRENT_USER_KEY[0] });
-    client.setQueryData(CURRENT_USER_KEY, null);
-    await client.fetchQuery({
-      queryKey: CURRENT_USER_KEY,
-      queryFn: ({ signal }) => authApi.getCurrentUser(signal),
-      staleTime: 0,
-    });
-  };
-
   const login = async (data: { email: string; password: string }) => {
-    await authApi.login(data);
-    await refreshUser();
+    const res = await authApi.login(data);
+    client.setQueryData(CURRENT_USER_KEY, res.user);
   };
 
   const register = async (data: { name: string; email: string; password: string }) => {
-    await authApi.register(data);
-    await refreshUser();
+    const res = await authApi.register(data);
+    client.setQueryData(CURRENT_USER_KEY, res.user);
+  };
+
+  const loginAsDemo = async () => {
+    const res = await authApi.loginAsDemo();
+    client.setQueryData(CURRENT_USER_KEY, res.user);
   };
 
   const logout = async () => {
@@ -75,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         login,
         register,
+        loginAsDemo,
         logout,
       }}
     >
