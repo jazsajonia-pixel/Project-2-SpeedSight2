@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { vehicleDetector } from '../services/vision/detector';
 import { TrackedVehicle } from '../services/vision/tracker';
+import { calibrationService } from '../services/calibration';
 import { api } from '../services/api';
 
 export interface UseMonitoringPipelineOptions {
@@ -94,26 +95,35 @@ export function useMonitoringPipeline(options: UseMonitoringPipelineOptions = {}
     if (now - lastFrameTimeRef.current >= interval) {
       if (videoRef.current && videoRef.current.readyState >= 2) {
         try {
-          const tracks = await vehicleDetector.detectAndTrack(videoRef.current);
+          const calProfile = calibrationService.getActiveProfile();
+          const calibrationParams = calProfile
+            ? {
+                scale: calProfile.data.scale,
+                distanceUnit: calProfile.data.distanceUnit,
+                speedUnit: calProfile.speedUnit,
+              }
+            : undefined;
+
+          const tracks = await vehicleDetector.detectAndTrack(videoRef.current, calibrationParams);
           setTrackedVehicles(tracks);
 
           const elapsedSeconds = (now - lastFrameTimeRef.current) / 1000;
           setFps(Math.round(1 / elapsedSeconds));
           lastFrameTimeRef.current = now;
 
-          // If a session exists, persist newly identified tracked vehicles without fake speeds
+          // If a session exists, persist newly identified tracked vehicles with real estimated speeds
           if (sessionId) {
             for (const track of tracks) {
-              if (!reportedTracksRef.current.has(track.trackingId)) {
+              if (track.estimatedSpeed > 0 && !reportedTracksRef.current.has(track.trackingId)) {
                 reportedTracksRef.current.add(track.trackingId);
 
                 api.createDetection({
                   sessionId,
                   trackingId: track.trackingId,
                   vehicleType: track.vehicleType.toUpperCase(),
-                  estimatedSpeed: 0, // Explicitly 0 / pending speed estimation per Phase 5 scope
-                  speedUnit: 'KMH',
-                  classification: 'NORMAL',
+                  estimatedSpeed: track.estimatedSpeed,
+                  speedUnit: track.speedUnit,
+                  classification: track.classification,
                   confidence: track.confidence,
                   boundingBox: track.boundingBox,
                 }).catch(() => {

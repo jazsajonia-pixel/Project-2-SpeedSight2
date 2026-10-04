@@ -28,7 +28,7 @@ export const DetectionsPage: React.FC = () => {
     timestamp: new Date(det.detectedAt).toLocaleTimeString(),
     vehicleId: det.trackingId,
     vehicleType: det.vehicleType,
-    estimatedSpeed: det.estimatedSpeed ? `${det.estimatedSpeed} mph` : 'N/A (Phase 5 CV)',
+    estimatedSpeed: det.estimatedSpeed && det.estimatedSpeed > 0 ? `${det.estimatedSpeed} ${det.speedUnit || 'KMH'}` : 'Calibration Required',
     classification: (det.classification?.toLowerCase() || 'normal') as any,
     confidence: det.confidence ? `${(det.confidence * 100).toFixed(0)}%` : 'N/A',
     isRealCv: true,
@@ -59,7 +59,7 @@ export const DetectionsPage: React.FC = () => {
     { header: 'Timestamp', accessorKey: 'timestamp', className: 'font-mono text-slate-500' },
     { header: 'Vehicle ID', accessorKey: 'vehicleId', className: 'font-semibold text-slate-900' },
     { header: 'Type', accessorKey: 'vehicleType' },
-    { header: 'Speed', accessorKey: 'estimatedSpeed' },
+    { header: 'Estimated Speed', accessorKey: 'estimatedSpeed' },
     {
       header: 'Classification',
       cell: (row) => <Badge classification={row.classification}>{row.classification.toUpperCase()}</Badge>,
