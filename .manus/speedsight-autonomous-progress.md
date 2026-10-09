@@ -27,3 +27,15 @@
 - **Commit:** `cceda4b08f09c30d89d9d550b7e133a454c31a50` (`fix: bound database health checks`), branch `autonomous/bounded-database-health-2026-10-09`.
 - **Remaining risks:** The timeout guard prevents a stuck health request but does not fix missing/incorrect Vercel `DATABASE_URL`, migrations, or Neon connection pooling.
 - **Explicitly skipped:** Authentication route changes, because the adapter compatibility fix was completed in Execution 1 and should not be repeated.
+
+## Execution 3 — 2026-10-09
+
+- **Primary improvement:** Lazy-load TensorFlow.js and COCO-SSD so the computer-vision stack is fetched only when the detector initializes.
+- **Why selected:** The previous production build had a 2.26 MB initial JavaScript bundle and Vite warned about oversized chunks. The monitoring hook initializes the model only on the monitoring page, so module-level ML imports were unnecessary for login, dashboard, and other routes.
+- **Changes completed:** Converted the detector’s TensorFlow.js and COCO-SSD imports to runtime dynamic imports. The initial entry chunk is now approximately 1.28 MB, while the ML dependencies are emitted as asynchronous chunks.
+- **Files changed:** `src/services/vision/detector.ts`, this progress file.
+- **Tests/checks:** `npm run build` passed; `npm test` passed with 14 tests; `git diff --check` passed. Build output confirmed separate asynchronous vision chunks.
+- **Deployment verification:** Pending until the pushed preview is ready.
+- **Commit:** Pending.
+- **Remaining risks:** The initial entry still contains large application/vendor chunks and Vite reports a chunk warning; further route-level code splitting can be considered separately.
+- **Explicitly skipped:** Database and authentication changes because production health is connected and those fixes were completed in prior executions.
