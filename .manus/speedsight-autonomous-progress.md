@@ -63,3 +63,15 @@
 - **Commit:** `4bdf9c0e8fc88d3f60dd33d9747e58f202b89c87` (`fix: limit prisma connections in serverless`), merged into main as `069cb18c93fb170089d6262db9ce4290a53458a4` via PR #13.
 - **Remaining risks:** A connection limit cannot repair invalid credentials, missing schema, regional network problems, or an incorrectly configured Neon pooled URL. Production runtime errors reported before the current deployment may be historical.
 - **Explicitly skipped:** Authentication and UI work because the current evidence points to database connection behavior and those areas were addressed or documented in prior executions.
+
+## Execution 6 — 2026-10-10
+
+- **Primary improvement:** Add focused authentication endpoint regression coverage.
+- **Why selected:** The roadmap still listed production-safe authentication coverage as a candidate, while existing tests primarily covered protected-route 401 responses and the adapter boundary. This run closes the deterministic gaps without changing authentication behavior.
+- **Changes completed:** Added tests for malformed registration JSON, structured registration validation errors, malformed login JSON, missing current-user cookies, idempotent logout without a cookie, and existing protected-route authorization behavior.
+- **Files changed:** `api/__tests__/auth.test.ts`, this progress file.
+- **Tests/checks:** `npm run build` passed; `npm test` passed with 22 tests; `npx tsc --noEmit` passed; `git diff --check` passed. The existing Vite large-chunk warning remains unchanged.
+- **Deployment verification:** No runtime code changed; deployment verification is not required for this test-only improvement.
+- **Commit:** Pending.
+- **Remaining risks:** Database-backed login, registration, invalid-credential, duplicate-email, and expired-session paths still need an isolated database-backed integration harness or production-safe test environment; this run intentionally avoids creating users or changing production data.
+- **Explicitly skipped:** Database schema, pooling, session semantics, and UI changes because this execution is limited to deterministic authentication regression coverage.
