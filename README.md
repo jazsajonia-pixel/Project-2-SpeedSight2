@@ -34,6 +34,7 @@ cp .env.example .env
 
 Required environment variables:
 - `DATABASE_URL`: PostgreSQL / Neon database connection string (e.g. `postgresql://user:pass@ep-host.neon.tech/dbname?sslmode=require`).
+- Prisma defaults an unset `connection_limit` to `1` per serverless instance; explicitly configured pool settings are preserved.
 - `APP_URL`: Application origin (e.g. `http://localhost:5173`).
 - `AUTH_SECRET`: Secret key for session encryption / signature hashing.
 

@@ -51,3 +51,15 @@
 - **Commit:** Pending.
 - **Remaining risks:** Scheduled tasks must be updated once to use the short replacement instruction supplied in the task response.
 - **Explicitly skipped:** Application code, database changes, authentication changes, and deployment changes because this execution intentionally improves the autonomous-development workflow only.
+
+## Execution 5 — 2026-10-10
+
+- **Primary improvement:** Bound Prisma’s per-instance connection pool for Vercel serverless execution.
+- **Why selected:** Production runtime evidence still includes intermittent API timeouts, and the roadmap identifies Neon/Prisma pooling as the highest-priority unresolved issue. The singleton Prisma client already reuses instances, but an unbounded default pool can exhaust or delay connections across concurrent serverless instances.
+- **Changes completed:** Added `normalizeDatabaseUrl`, which defaults an unset PostgreSQL `connection_limit` to `1` while preserving explicit pool settings and malformed URLs for Prisma’s normal diagnostics. Applied it only when constructing the Prisma client and added focused regression tests plus README documentation.
+- **Files changed:** `api/utils/prisma-url.ts`, `api/utils/prisma.ts`, `api/__tests__/prisma-url.test.ts`, `README.md`, this progress file.
+- **Tests/checks:** `npm run build` passed; `npm test` passed with 17 tests; `npx tsc --noEmit` passed; Prisma validation passed with a non-secret local placeholder URL; `git diff --check` passed. Vite’s existing large-chunk warning remains unchanged.
+- **Deployment verification:** Pending preview deployment.
+- **Commit:** Pending.
+- **Remaining risks:** A connection limit cannot repair invalid credentials, missing schema, regional network problems, or an incorrectly configured Neon pooled URL. Production runtime errors reported before the current deployment may be historical.
+- **Explicitly skipped:** Authentication and UI work because the current evidence points to database connection behavior and those areas were addressed or documented in prior executions.
