@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { handle } from '@hono/vercel';
 import { VehicleClassification, User, DetectionEventType } from '@prisma/client';
 import { prisma } from './utils/prisma.js';
 import { errorHandler } from './middleware/error.js';
@@ -29,6 +28,7 @@ import {
   detectionQuerySchema,
   createReportSchema,
 } from './schemas/index.js';
+import { createVercelHandler } from './vercel-adapter.js';
 
 export const runtime = 'nodejs';
 
@@ -701,4 +701,4 @@ app.onError(errorHandler);
 app.route('/', api);
 app.route('/api', api);
 
-export default handle(app);
+export default createVercelHandler(app);
