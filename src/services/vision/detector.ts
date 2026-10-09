@@ -1,5 +1,4 @@
-import * as tf from '@tensorflow/tfjs';
-import * as cocoSsd from '@tensorflow-models/coco-ssd';
+import type * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { ObjectTracker, TrackedVehicle } from './tracker';
 
 export const VEHICLE_CLASSES = new Set(['car', 'truck', 'bus', 'motorcycle']);
@@ -14,6 +13,10 @@ export class VehicleDetector {
 
     this.isInitializing = true;
     try {
+      const [tf, cocoSsd] = await Promise.all([
+        import('@tensorflow/tfjs'),
+        import('@tensorflow-models/coco-ssd'),
+      ]);
       await tf.ready();
       this.model = await cocoSsd.load({
         base: 'lite_mobilenet_v2',
