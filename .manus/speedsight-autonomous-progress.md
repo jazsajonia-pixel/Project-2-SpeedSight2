@@ -39,3 +39,15 @@
 - **Commit:** `e05c13a624edc4d4ab83ee7415604d7d320987e9` (`perf: lazy load browser vision model`), merged into main as `93527e839cdce539e094bb527806b9eac092df69` via PR #11.
 - **Remaining risks:** The initial entry still contains large application/vendor chunks and Vite reports a chunk warning; further route-level code splitting can be considered separately.
 - **Explicitly skipped:** Database and authentication changes because production health is connected and those fixes were completed in prior executions.
+
+## Execution 4 — 2026-10-10
+
+- **Primary improvement:** Move the long autonomous-development instructions into the repository as maintainable documentation.
+- **Why selected:** Scheduled executions previously depended on a large prompt stored outside the repository. A repository-controlled prompt and roadmap make the workflow shorter, versioned, discoverable, and easier to evolve without repeating completed work.
+- **Changes completed:** Added `auto_dev_prompt.md` as the concise execution contract and `development_phases.md` as the full future-development roadmap. Linked both from `README.md`.
+- **Files changed:** `auto_dev_prompt.md`, `development_phases.md`, `README.md`, this progress file.
+- **Tests/checks:** Documentation-only change; verified files and links, and ran `git diff --check`.
+- **Deployment verification:** Not applicable; no application runtime code changed.
+- **Commit:** Pending.
+- **Remaining risks:** Scheduled tasks must be updated once to use the short replacement instruction supplied in the task response.
+- **Explicitly skipped:** Application code, database changes, authentication changes, and deployment changes because this execution intentionally improves the autonomous-development workflow only.
