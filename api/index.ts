@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { handle } from '@hono/vercel';
 import { VehicleClassification, User, DetectionEventType } from '@prisma/client';
 import { prisma } from './utils/prisma.js';
 import { errorHandler } from './middleware/error.js';
 import { authMiddleware } from './middleware/auth.js';
+import { checkDatabaseHealth } from './utils/health.js';
 import {
   hashPassword,
   verifyPassword,
@@ -29,6 +29,7 @@ import {
   detectionQuerySchema,
   createReportSchema,
 } from './schemas/index.js';
+import { createVercelHandler } from './vercel-adapter.js';
 
 export const runtime = 'nodejs';
 
@@ -46,20 +47,15 @@ api.onError(errorHandler);
 // Health Endpoint (Public)
 // ----------------------------------------------------
 api.get('/health', async (c) => {
-  let dbStatus = 'disconnected';
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    dbStatus = 'connected';
-  } catch {
-    dbStatus = 'unavailable (dev environment mode)';
-  }
+  const databaseHealth = await checkDatabaseHealth(() => prisma.$queryRaw`SELECT 1`);
+  const database = databaseHealth === 'connected' ? 'connected' : `unavailable (${databaseHealth})`;
 
   return c.json({
-    status: 'ok',
+    status: databaseHealth === 'connected' ? 'ok' : 'degraded',
     service: 'speedsight-api',
-    database: dbStatus,
+    database,
     timestamp: new Date().toISOString(),
-  });
+  }, databaseHealth === 'connected' ? 200 : 503);
 });
 
 // ----------------------------------------------------
@@ -701,4 +697,4 @@ app.onError(errorHandler);
 app.route('/', api);
 app.route('/api', api);
 
-export default handle(app);
+export default createVercelHandler(app);
