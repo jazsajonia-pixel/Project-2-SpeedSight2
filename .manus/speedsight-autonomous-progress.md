@@ -48,7 +48,7 @@
 - **Files changed:** `auto_dev_prompt.md`, `development_phases.md`, `README.md`, this progress file.
 - **Tests/checks:** Documentation-only change; verified files and links, and ran `git diff --check`.
 - **Deployment verification:** Not applicable; no application runtime code changed.
-- **Commit:** Pending.
+- **Commit:** `586670f` (`docs: add repository autonomous development plan`), merged into main as `a1dd731` via PR #12.
 - **Remaining risks:** Scheduled tasks must be updated once to use the short replacement instruction supplied in the task response.
 - **Explicitly skipped:** Application code, database changes, authentication changes, and deployment changes because this execution intentionally improves the autonomous-development workflow only.
 
@@ -59,7 +59,7 @@
 - **Changes completed:** Added `normalizeDatabaseUrl`, which defaults an unset PostgreSQL `connection_limit` to `1` while preserving explicit pool settings and malformed URLs for Prisma’s normal diagnostics. Applied it only when constructing the Prisma client and added focused regression tests plus README documentation.
 - **Files changed:** `api/utils/prisma-url.ts`, `api/utils/prisma.ts`, `api/__tests__/prisma-url.test.ts`, `README.md`, this progress file.
 - **Tests/checks:** `npm run build` passed; `npm test` passed with 17 tests; `npx tsc --noEmit` passed; Prisma validation passed with a non-secret local placeholder URL; `git diff --check` passed. Vite’s existing large-chunk warning remains unchanged.
-- **Deployment verification:** Pending preview deployment.
-- **Commit:** Pending.
+- **Deployment verification:** Preview `project-2-speed-sight2-nkr2r3v4j-chrono8.vercel.app` responded within the bounded health deadline with HTTP 503 because Preview has no `DATABASE_URL`. After merging, production deployment `dpl_5zjZtLdgsFpMWEuKWC37vhXcrHwr` reached `READY`; both the exact deployment URL and `https://project-2-speed-sight2.vercel.app/api/health` returned HTTP 200 with `database: "connected"`.
+- **Commit:** `4bdf9c0e8fc88d3f60dd33d9747e58f202b89c87` (`fix: limit prisma connections in serverless`), merged into main as `069cb18c93fb170089d6262db9ce4290a53458a4` via PR #13.
 - **Remaining risks:** A connection limit cannot repair invalid credentials, missing schema, regional network problems, or an incorrectly configured Neon pooled URL. Production runtime errors reported before the current deployment may be historical.
 - **Explicitly skipped:** Authentication and UI work because the current evidence points to database connection behavior and those areas were addressed or documented in prior executions.
