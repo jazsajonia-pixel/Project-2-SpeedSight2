@@ -72,6 +72,6 @@
 - **Files changed:** `api/__tests__/auth.test.ts`, this progress file.
 - **Tests/checks:** `npm run build` passed; `npm test` passed with 22 tests; `npx tsc --noEmit` passed; `git diff --check` passed. The existing Vite large-chunk warning remains unchanged.
 - **Deployment verification:** No runtime code changed; deployment verification is not required for this test-only improvement.
-- **Commit:** Pending.
+- **Commit:** `480ab65` (`test: cover authentication request failures`), merged into main as `8f6d2d1` via PR #14.
 - **Remaining risks:** Database-backed login, registration, invalid-credential, duplicate-email, and expired-session paths still need an isolated database-backed integration harness or production-safe test environment; this run intentionally avoids creating users or changing production data.
 - **Explicitly skipped:** Database schema, pooling, session semantics, and UI changes because this execution is limited to deterministic authentication regression coverage.
