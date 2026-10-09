@@ -7,8 +7,8 @@
 - **Changes completed:** Added a Node/Vercel-to-Web Request/Response adapter, routed `api/index.ts` through it, removed the unused direct `@hono/vercel` dependency, and added regression tests for malformed request bodies, missing cookies, response headers, and response bodies.
 - **Files changed:** `api/vercel-adapter.ts`, `api/index.ts`, `api/__tests__/vercel-adapter.test.ts`, `package.json`, `package-lock.json`, this progress file.
 - **Tests/checks:** `npm run build` passed; `npm test` passed with 11 tests; Prisma validation passed with a non-secret local placeholder URL; `git diff --check` passed.
-- **Deployment verification:** Pending; production must be retested after the branch is deployed.
-- **Commit:** Pending.
+- **Deployment verification:** Preview deployment `project-2-speed-sight2-1mkua0od4-chrono8.vercel.app` reached `READY`. `GET /api/health` returned HTTP 200 and no longer timed out. It reported `database: unavailable (dev environment mode)`, so Vercel database environment configuration remains a separate blocker. The protected preview blocked direct `/api/auth/me` verification through the deployment fetch path.
+- **Commit:** `9f5f0170b7ca857322cab4752dc88853c3f6dd74` (`fix: adapt Hono requests for Vercel serverless`), branch `autonomous/fix-hono-vercel-adapter-2026-10-09`.
 - **Remaining risks:** Database-backed production endpoints may still time out independently of the adapter fix.
 - **Explicitly skipped:** Database configuration and Prisma pooling changes; they are separate from the adapter defect and require production environment/database access.
 
