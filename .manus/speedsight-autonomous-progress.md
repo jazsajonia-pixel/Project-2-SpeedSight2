@@ -75,3 +75,15 @@
 - **Commit:** `480ab65` (`test: cover authentication request failures`), merged into main as `8f6d2d1` via PR #14.
 - **Remaining risks:** Database-backed login, registration, invalid-credential, duplicate-email, and expired-session paths still need an isolated database-backed integration harness or production-safe test environment; this run intentionally avoids creating users or changing production data.
 - **Explicitly skipped:** Database schema, pooling, session semantics, and UI changes because this execution is limited to deterministic authentication regression coverage.
+
+## Execution 7 — 2026-10-10
+
+- **Primary improvement:** Prevent overlapping TensorFlow.js vehicle-detection inferences.
+- **Why selected:** The monitoring loop used `requestAnimationFrame` and awaited model inference without an in-flight guard. On slower devices, a detection call could overlap the next scheduled call, increasing CPU/memory pressure and producing stale results.
+- **Changes completed:** Added a small `InferenceGate`, serialized model calls in `useMonitoringPipeline`, released the gate in `finally`, and ignored results that complete after monitoring has stopped. Added unit tests for acquisition, release, and repeated release safety. Updated the README baseline.
+- **Files changed:** `src/services/vision/inferenceGate.ts`, `src/services/vision/inferenceGate.test.ts`, `src/hooks/useMonitoringPipeline.ts`, `README.md`, this progress file.
+- **Tests/checks:** `npm run build` passed; `npm test` passed with 25 tests; `npx tsc --noEmit` passed; `git diff --check` passed. The existing Vite large-chunk warning remains unchanged.
+- **Deployment verification:** Pending preview deployment.
+- **Commit:** Pending.
+- **Remaining risks:** Model inference remains CPU/GPU intensive and speed estimation is still not implemented; the gate prioritizes stability over attempting concurrent inference.
+- **Explicitly skipped:** Calibration, speed estimation, database, authentication, and broad UI changes because this execution is limited to inference lifecycle reliability.

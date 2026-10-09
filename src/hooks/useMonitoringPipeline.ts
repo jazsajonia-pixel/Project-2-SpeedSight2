@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { vehicleDetector } from '../services/vision/detector';
 import { TrackedVehicle } from '../services/vision/tracker';
+import { InferenceGate } from '../services/vision/inferenceGate';
 import { api } from '../services/api';
 
 export interface UseMonitoringPipelineOptions {
@@ -27,6 +28,7 @@ export function useMonitoringPipeline(options: UseMonitoringPipelineOptions = {}
   const animationFrameRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef<number>(0);
   const reportedTracksRef = useRef<Set<string>>(new Set());
+  const inferenceGateRef = useRef(new InferenceGate());
 
   // Refs to avoid stale closures in loop
   const isMonitoringRef = useRef<boolean>(false);
@@ -93,8 +95,12 @@ export function useMonitoringPipeline(options: UseMonitoringPipelineOptions = {}
 
     if (now - lastFrameTimeRef.current >= interval) {
       if (videoRef.current && videoRef.current.readyState >= 2) {
+        if (!inferenceGateRef.current.tryEnter()) return;
+
         try {
           const tracks = await vehicleDetector.detectAndTrack(videoRef.current);
+          if (!isMonitoringRef.current) return;
+
           setTrackedVehicles(tracks);
 
           const elapsedSeconds = (now - lastFrameTimeRef.current) / 1000;
@@ -124,6 +130,8 @@ export function useMonitoringPipeline(options: UseMonitoringPipelineOptions = {}
           }
         } catch (err: any) {
           // Frame processing error caught non-fatally
+        } finally {
+          inferenceGateRef.current.leave();
         }
       }
     }
