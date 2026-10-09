@@ -83,7 +83,7 @@
 - **Changes completed:** Added a small `InferenceGate`, serialized model calls in `useMonitoringPipeline`, released the gate in `finally`, and ignored results that complete after monitoring has stopped. Added unit tests for acquisition, release, and repeated release safety. Updated the README baseline.
 - **Files changed:** `src/services/vision/inferenceGate.ts`, `src/services/vision/inferenceGate.test.ts`, `src/hooks/useMonitoringPipeline.ts`, `README.md`, this progress file.
 - **Tests/checks:** `npm run build` passed; `npm test` passed with 25 tests; `npx tsc --noEmit` passed; `git diff --check` passed. The existing Vite large-chunk warning remains unchanged.
-- **Deployment verification:** Pending preview deployment.
-- **Commit:** Pending.
+- **Deployment verification:** Preview `project-2-speed-sight2-3fyovr0xa-chrono8.vercel.app` served the updated frontend successfully. After merging, production deployment `dpl_2jQ7YxrAcNNqWiC3eWKdnHtcBgj3` reached `READY` and the production homepage served the new inference-gate bundle. `/api/health` returned a fast HTTP 503 with `database: "unavailable (timeout)"`, confirming the existing bounded database behavior; this is separate from the frontend inference change.
+- **Commit:** `95b227f4c2f355a768f1ba7098896528e50385d3` (`fix: serialize vision model inference`), merged into main as `19eb88486e4936a37bd05a93ab13c2ded2da63f8` via PR #15.
 - **Remaining risks:** Model inference remains CPU/GPU intensive and speed estimation is still not implemented; the gate prioritizes stability over attempting concurrent inference.
 - **Explicitly skipped:** Calibration, speed estimation, database, authentication, and broad UI changes because this execution is limited to inference lifecycle reliability.
