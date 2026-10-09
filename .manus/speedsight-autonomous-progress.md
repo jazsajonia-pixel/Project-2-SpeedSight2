@@ -35,7 +35,7 @@
 - **Changes completed:** Converted the detector’s TensorFlow.js and COCO-SSD imports to runtime dynamic imports. The initial entry chunk is now approximately 1.28 MB, while the ML dependencies are emitted as asynchronous chunks.
 - **Files changed:** `src/services/vision/detector.ts`, this progress file.
 - **Tests/checks:** `npm run build` passed; `npm test` passed with 14 tests; `git diff --check` passed. Build output confirmed separate asynchronous vision chunks.
-- **Deployment verification:** Pending until the pushed preview is ready.
-- **Commit:** Pending.
+- **Deployment verification:** Preview `project-2-speed-sight2-az8xerm7i-chrono8.vercel.app` reached `READY` and served the optimized frontend. The change was merged via PR #11, and production deployment `dpl_3BGQzcTvLWSmLPU1EZGfy2tvAbLz` reached `READY` on the main aliases. Production `/api/health` returned HTTP 503 with `database: "unavailable (timeout)"` in under the bounded deadline, confirming the guard works; intermittent Neon connection latency remains a separate issue.
+- **Commit:** `e05c13a624edc4d4ab83ee7415604d7d320987e9` (`perf: lazy load browser vision model`), merged into main as `93527e839cdce539e094bb527806b9eac092df69` via PR #11.
 - **Remaining risks:** The initial entry still contains large application/vendor chunks and Vite reports a chunk warning; further route-level code splitting can be considered separately.
 - **Explicitly skipped:** Database and authentication changes because production health is connected and those fixes were completed in prior executions.
