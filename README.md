@@ -61,7 +61,7 @@ npm run build
 
 ## REST API Endpoints
 
-- `GET /api/health` - API and database status
+- `GET /api/health` - API and database status; returns HTTP 503 with `status: "degraded"` when the database is unavailable or does not respond within 2.5 seconds
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User sign-in
 - `POST /api/auth/logout` - Session invalidation
