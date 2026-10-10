@@ -95,7 +95,7 @@
 - **Changes completed:** Added explicit model-loading state, a pure readiness helper for camera/video/demo modes, disabled camera/video start until the model is ready, added a local-video selection requirement, added runtime guards inside the pipeline, and exposed clear loading/unavailable status text.
 - **Files changed:** `src/services/vision/monitoringReadiness.ts`, `src/services/vision/monitoringReadiness.test.ts`, `src/hooks/useMonitoringPipeline.ts`, `src/pages/MonitoringPage.tsx`, this progress file.
 - **Tests/checks:** `npm run build` passed; `npm test` passed with 29 tests; `npx tsc --noEmit` passed; `git diff --check` passed. The existing Vite large-chunk warning remains unchanged.
-- **Deployment verification:** Pending preview deployment.
-- **Commit:** Pending.
+- **Deployment verification:** Preview `project-2-speed-sight2-i1qa4z0kv-chrono8.vercel.app` served the updated frontend successfully. Production deployment `dpl_5vqUBh58fo4pxek7BkQgYZday4p8` reached `READY`; the exact deployment URL served the new frontend bundle. The production API health endpoint returned a fast HTTP 503 with `database: "unavailable (timeout)"`, which is the existing bounded database behavior and separate from this frontend readiness change.
+- **Commit:** `3e6cdaa587ab1806451cd42a6ec695a48d1ca316` (`fix: gate monitoring on model readiness`), merged into main as `96aa0aa667633c0c4d7d124929e07557567fa02a` via PR #16.
 - **Remaining risks:** Browser camera permissions, unsupported devices, model download failures, and intermittent database connectivity still require user-facing/runtime handling; this change prevents premature starts but does not make camera hardware available.
 - **Explicitly skipped:** Calibration, speed estimation, database, authentication, and inference scheduling changes because they were outside this execution’s readiness scope or already completed.
