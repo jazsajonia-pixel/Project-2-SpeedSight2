@@ -87,3 +87,15 @@
 - **Commit:** `95b227f4c2f355a768f1ba7098896528e50385d3` (`fix: serialize vision model inference`), merged into main as `19eb88486e4936a37bd05a93ab13c2ded2da63f8` via PR #15.
 - **Remaining risks:** Model inference remains CPU/GPU intensive and speed estimation is still not implemented; the gate prioritizes stability over attempting concurrent inference.
 - **Explicitly skipped:** Calibration, speed estimation, database, authentication, and broad UI changes because this execution is limited to inference lifecycle reliability.
+
+## Execution 8 — 2026-10-11
+
+- **Primary improvement:** Make computer-vision model and source readiness explicit before monitoring starts.
+- **Why selected:** The monitoring page could show `Standby` while the model was still loading, and a user could click Start before TensorFlow.js/COCO-SSD was ready. The pipeline would then silently produce empty detections until initialization completed.
+- **Changes completed:** Added explicit model-loading state, a pure readiness helper for camera/video/demo modes, disabled camera/video start until the model is ready, added a local-video selection requirement, added runtime guards inside the pipeline, and exposed clear loading/unavailable status text.
+- **Files changed:** `src/services/vision/monitoringReadiness.ts`, `src/services/vision/monitoringReadiness.test.ts`, `src/hooks/useMonitoringPipeline.ts`, `src/pages/MonitoringPage.tsx`, this progress file.
+- **Tests/checks:** `npm run build` passed; `npm test` passed with 29 tests; `npx tsc --noEmit` passed; `git diff --check` passed. The existing Vite large-chunk warning remains unchanged.
+- **Deployment verification:** Pending preview deployment.
+- **Commit:** Pending.
+- **Remaining risks:** Browser camera permissions, unsupported devices, model download failures, and intermittent database connectivity still require user-facing/runtime handling; this change prevents premature starts but does not make camera hardware available.
+- **Explicitly skipped:** Calibration, speed estimation, database, authentication, and inference scheduling changes because they were outside this execution’s readiness scope or already completed.

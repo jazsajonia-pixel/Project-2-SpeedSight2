@@ -19,6 +19,7 @@ import { StatusIndicator } from '../components/ui/StatusIndicator';
 import { useMonitoringPipeline } from '../hooks/useMonitoringPipeline';
 import { DEMO_DETECTIONS } from '../lib/demoData';
 import { api } from '../services/api';
+import { getMonitoringReadiness } from '../services/vision/monitoringReadiness';
 
 export const MonitoringPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -56,6 +57,8 @@ export const MonitoringPage: React.FC = () => {
     videoRef,
     trackedVehicles,
     error,
+    isInitializing,
+    isModelLoading,
     modelReady,
     vehicleCount,
     startCameraStream,
@@ -65,6 +68,13 @@ export const MonitoringPage: React.FC = () => {
     stopMonitoring,
     setSelectedDeviceId,
   } = useMonitoringPipeline({ sessionId: activeSessionId });
+
+  const readiness = getMonitoringReadiness({
+    sourceMode,
+    modelReady,
+    modelLoading: isModelLoading,
+    videoSelected: Boolean(selectedFile),
+  });
 
   const handleStart = async () => {
     if (sourceMode === 'VIDEO') {
@@ -102,8 +112,9 @@ export const MonitoringPage: React.FC = () => {
                 size="sm"
                 icon={<Play className="w-4 h-4" />}
                 onClick={handleStart}
+                disabled={!readiness.canStart || isInitializing}
               >
-                Start Monitoring
+                {isInitializing ? 'Starting…' : readiness.label}
               </Button>
             ) : (
               <>
@@ -136,6 +147,12 @@ export const MonitoringPage: React.FC = () => {
             <p className="font-semibold text-rose-950">Source or Model Initialization Notice</p>
             <p className="mt-0.5">{error}</p>
           </div>
+        </div>
+      )}
+
+      {!isMonitoring && readiness.reason && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900" role="status">
+          {readiness.reason}
         </div>
       )}
 
@@ -246,7 +263,9 @@ export const MonitoringPage: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-3 font-mono text-[11px] text-slate-400">
-                  <span>MODEL: {modelReady ? 'COCO-SSD Ready' : 'Standby'}</span>
+                  <span>
+                    MODEL: {isModelLoading ? 'Loading…' : modelReady ? 'COCO-SSD Ready' : 'Unavailable'}
+                  </span>
                 </div>
               </div>
 
