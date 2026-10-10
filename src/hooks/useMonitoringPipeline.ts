@@ -13,6 +13,7 @@ export function useMonitoringPipeline(options: UseMonitoringPipelineOptions = {}
   const { sessionId, fpsTarget = 10 } = options;
 
   const [isInitializing, setIsInitializing] = useState<boolean>(false);
+  const [isModelLoading, setIsModelLoading] = useState<boolean>(false);
   const [isModelLoaded, setIsModelLoaded] = useState<boolean>(false);
   const [isMonitoring, setIsMonitoring] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -65,6 +66,7 @@ export function useMonitoringPipeline(options: UseMonitoringPipelineOptions = {}
   useEffect(() => {
     let isMounted = true;
     const loadModel = async () => {
+      setIsModelLoading(true);
       try {
         await vehicleDetector.initialize();
         if (isMounted) {
@@ -73,6 +75,10 @@ export function useMonitoringPipeline(options: UseMonitoringPipelineOptions = {}
       } catch (err: any) {
         if (isMounted) {
           setError(err?.message || 'Failed to initialize computer vision model.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsModelLoading(false);
         }
       }
     };
@@ -142,6 +148,13 @@ export function useMonitoringPipeline(options: UseMonitoringPipelineOptions = {}
   }, [fpsTarget, sessionId]);
 
   const startCameraStream = async (deviceId?: string) => {
+    if (!isModelLoaded) {
+      setError(isModelLoading
+        ? 'The vehicle-detection model is still loading. Please wait until it is ready.'
+        : 'The vehicle-detection model is unavailable. Reload the page and try again.');
+      return;
+    }
+
     setIsInitializing(true);
     setError(null);
     try {
@@ -182,6 +195,13 @@ export function useMonitoringPipeline(options: UseMonitoringPipelineOptions = {}
   };
 
   const loadVideoFile = async (file: File) => {
+    if (!isModelLoaded) {
+      setError(isModelLoading
+        ? 'The vehicle-detection model is still loading. Please wait until it is ready.'
+        : 'The vehicle-detection model is unavailable. Reload the page and try again.');
+      return;
+    }
+
     setIsInitializing(true);
     setError(null);
     try {
@@ -262,6 +282,7 @@ export function useMonitoringPipeline(options: UseMonitoringPipelineOptions = {}
   return {
     videoRef,
     isInitializing,
+    isModelLoading,
     isModelLoaded,
     modelReady: isModelLoaded,
     isMonitoring,
