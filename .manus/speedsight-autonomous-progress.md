@@ -18,7 +18,7 @@
 - **Changes completed:** Normalized `401 Unauthorized` from `/api/auth/me` to signed-out state so users are redirected to login; preserved non-401 failures for the retry screen; added actionable messages for 5xx and forbidden responses; added focused classifier tests.
 - **Files changed:** `src/features/auth/sessionState.ts`, `src/features/auth/sessionState.test.ts`, `src/features/auth/AuthContext.tsx`, `src/components/ProtectedRoute.tsx`, this progress file.
 - **Tests/checks:** `npm run build` passed; `npm test` passed with 33 tests; `npx tsc --noEmit` passed; `git diff --check` passed. The existing Vite large-chunk warning and local missing `DATABASE_URL` test log remain unchanged.
-- **Deployment verification:** Pending preview deployment.
-- **Commit:** Pending.
+- **Deployment verification:** The preview frontend served successfully, although direct curl to the preview was protected by Vercel SSO. Production deployment `dpl_9Tpc5pUiAKpSqSwYSU1qXiCVjSLq` reached `READY` on the main aliases. Production `/api/auth/me` returned the expected HTTP 401 without a cookie; this now redirects to login instead of showing the transient-session warning.
+- **Commit:** `6d115c36ba0bde616dd28af6ba4120cfe0e92f44` (`fix: distinguish session outage from signed out state`), merged into main as `026841ad3108312c6cd9ff80bd8c685d3af0a581` via PR #18.
 - **Remaining risks:** A real 5xx/database timeout still requires the backend/database to recover; this fix improves diagnosis and retry behavior without masking the outage. The screenshot URL itself returned Vercel `DEPLOYMENT_NOT_FOUND` when checked, so it may be an expired preview or mistyped deployment URL.
 - **Explicitly skipped:** Database credentials/pooling changes, session-cookie changes, UI redesign, computer vision, calibration, and speed estimation because this execution is limited to session-check error semantics.
