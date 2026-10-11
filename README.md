@@ -1,6 +1,8 @@
 # SpeedSight - Vehicle Speed Monitoring & Traffic Analytics
 
-SpeedSight is a browser-based vehicle speed monitoring and traffic analytics platform built with Vite, React, TypeScript, Tailwind CSS, Hono, and Prisma/PostgreSQL.
+SpeedSight is a browser-based traffic analytics project for reviewing vehicle detections, monitoring sessions, camera profiles, and reports. Its computer-vision foundation processes a local camera stream or video file in the browser, keeping the media on the device rather than uploading it to the server.
+
+The current baseline combines a React and TypeScript interface with a Hono API and PostgreSQL persistence. Measurements are estimates for analysis and are **not certified for legal speed enforcement**.
 
 ---
 
