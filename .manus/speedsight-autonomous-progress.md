@@ -6,7 +6,7 @@
 - **Changes completed:** Added SpeedSight visual tokens and subtle fade/bar/pulse animations with `prefers-reduced-motion` support; refreshed statistic cards and the live preview with cyan/navy accents and hover elevation; added a 6h/12h/24h traffic trend selector with typed presets, accessible pressed states, animated bars, and range-aware labels.
 - **Files changed:** `src/index.css`, `src/components/ui/StatCard.tsx`, `src/pages/DashboardPage.tsx`, `src/lib/dashboardChart.ts`, `src/lib/dashboardChart.test.ts`, this progress file.
 - **Tests/checks:** `npm run build` passed; `npm test` passed with 31 tests; `npx tsc --noEmit` passed; `git diff --check` passed. The existing Vite large-chunk warning remains unchanged. Prisma’s existing update notice was informational only.
-- **Deployment verification:** Pending preview deployment.
-- **Commit:** Pending.
+- **Deployment verification:** Preview `project-2-speed-sight2-t2q2nqo5z-chrono8.vercel.app` reached `READY` and served the refreshed frontend bundle. Production deployment `dpl_8xsrS2ncwGSjJTATnNtFLmFC95yH` reached `READY` on the main aliases. The production homepage served the new dashboard bundle. `/api/health` returned the existing fast HTTP 503 with `database: "unavailable (timeout)"`; no UI code changed the API or database behavior.
+- **Commit:** `bd842725a0236cbc4f13be811dcbacffd4f60851` (`feat: refresh operator dashboard experience`), merged into main as `946ee5b0a129545e3b1c300d24231858fa5aae6d` via PR #17.
 - **Remaining risks:** Dashboard values remain demo/sample data and are clearly labeled; the visual refresh does not make analytics live. Motion is intentionally subtle and disabled for users who prefer reduced motion.
 - **Explicitly skipped:** Database, authentication, computer-vision inference, calibration, and speed-estimation changes because this execution is limited to a reversible dashboard UI/UX improvement.
