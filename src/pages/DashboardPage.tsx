@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Car,
@@ -9,6 +9,8 @@ import {
   Play,
   ArrowRight,
   TrendingUp,
+  Radio,
+  Clock3,
 } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { StatCard } from '../components/ui/StatCard';
@@ -17,8 +19,12 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { StatusIndicator } from '../components/ui/StatusIndicator';
 import { DEMO_DETECTIONS } from '../lib/demoData';
+import { DashboardRange, getDashboardTrend } from '../lib/dashboardChart';
 
 export const DashboardPage: React.FC = () => {
+  const [range, setRange] = useState<DashboardRange>('12h');
+  const trend = getDashboardTrend(range);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -70,18 +76,21 @@ export const DashboardPage: React.FC = () => {
         {/* Live Monitoring Preview Panel */}
         <div className="lg:col-span-2">
           <Card
+            className="ss-fade-up [animation-delay:120ms]"
             title="Live Monitoring Preview"
             subtitle="Simulated real-time camera feed with object detection overlay"
             action={<StatusIndicator status="active" label="SIMULATED FEED" />}
           >
-            <div className="relative aspect-video bg-slate-900 rounded-xl overflow-hidden flex flex-col justify-between p-4 border border-slate-800">
+            <div className="relative aspect-video bg-gradient-to-br from-slate-950 via-[#102a43] to-cyan-950 rounded-xl overflow-hidden flex flex-col justify-between p-4 border border-cyan-900/60 shadow-xl shadow-cyan-950/10">
               {/* Background Road Graphics Placeholder */}
               <div className="absolute inset-0 opacity-20 pointer-events-none flex items-center justify-center">
-                <div className="w-full h-1/2 border-y-2 border-dashed border-slate-400 transform -rotate-12"></div>
+                <div className="w-full h-1/2 border-y-2 border-dashed border-cyan-300 transform -rotate-12"></div>
               </div>
 
+              <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,white_0,transparent_24%),radial-gradient(circle_at_80%_80%,#22d3ee_0,transparent_28%)]" />
+
               {/* Bounding Box Mock Overlay 1 */}
-              <div className="absolute top-[35%] left-[25%] border-2 border-emerald-400 bg-emerald-500/10 rounded-xs p-1">
+              <div className="absolute top-[35%] left-[25%] border-2 border-emerald-400 bg-emerald-500/10 rounded-xs p-1 ss-soft-pulse">
                 <span className="bg-emerald-500 text-slate-950 text-[10px] font-bold px-1 rounded-2xs">
                   Sedan #8492 | 28 mph
                 </span>
@@ -94,13 +103,13 @@ export const DashboardPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex justify-between items-center text-xs text-slate-400 bg-slate-900/80 p-2 rounded-lg backdrop-blur-xs z-10">
-                <span className="font-mono">CAM-01: Main St Intersection</span>
+              <div className="flex justify-between items-center text-xs text-slate-300 bg-slate-950/70 p-2 rounded-lg backdrop-blur-xs z-10 border border-white/10">
+                <span className="font-mono flex items-center gap-1.5"><Radio className="w-3.5 h-3.5 text-cyan-300" /> CAM-01: Main St Intersection</span>
                 <span className="font-mono">FPS: 59.8 | RES: 1080p</span>
               </div>
 
               <div className="text-center py-8 z-10">
-                <p className="text-sm font-semibold text-slate-300">
+                <p className="text-sm font-semibold text-slate-200">
                   Camera Feed Preview Container
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
@@ -109,7 +118,7 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               <div className="flex justify-between items-center z-10">
-                <Badge variant="normal">Detection Engine Ready</Badge>
+                <Badge variant="info">Detection Engine Ready</Badge>
                 <Link to="/monitoring">
                   <Button size="sm" variant="secondary" icon={<Play className="w-3.5 h-3.5" />}>
                     Open Live Feed
@@ -122,27 +131,39 @@ export const DashboardPage: React.FC = () => {
 
         {/* Traffic Activity Chart Placeholder */}
         <div>
-          <Card title="Traffic Volume & Speed Trend" subtitle="Sample hourly vehicle distribution">
+          <Card className="ss-fade-up [animation-delay:220ms]" title="Traffic Volume & Speed Trend" subtitle="Sample hourly vehicle distribution" action={
+            <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1" role="group" aria-label="Traffic trend range">
+              {(['6h', '12h', '24h'] as DashboardRange[]).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={range === option}
+                  onClick={() => setRange(option)}
+                  className={`px-2 py-1 text-[10px] font-bold rounded-md transition-colors focus:outline-hidden focus:ring-2 focus:ring-cyan-500 ${range === option ? 'bg-white text-cyan-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  {option.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          }>
             <div className="space-y-4">
-              <div className="h-44 bg-slate-50 border border-slate-100 rounded-lg p-3 flex flex-col justify-between">
+              <div className="h-44 bg-gradient-to-b from-cyan-50/60 to-white border border-cyan-100 rounded-lg p-3 flex flex-col justify-between">
                 <div className="flex justify-between text-xs text-slate-400">
                   <span>Vehicles/hr</span>
-                  <span className="font-mono">Peak: 240 v/h @ 08:00</span>
+                  <span className="font-mono flex items-center gap-1"><Clock3 className="w-3 h-3" /> {range} window</span>
                 </div>
                 {/* Visual Bar Graph Mock */}
                 <div className="flex items-end justify-between h-28 gap-1 pt-2">
-                  {[35, 55, 90, 60, 40, 85, 100, 70, 45, 60].map((h, i) => (
-                    <div key={i} className="flex-1 bg-slate-200 hover:bg-blue-500 transition rounded-t-xs relative group" style={{ height: `${h}%` }}>
+                  {trend.map((point, i) => (
+                    <div key={point.label} className="flex-1 bg-cyan-200 hover:bg-blue-500 transition rounded-t-xs relative group ss-bar-rise" style={{ height: `${point.value}%`, animationDelay: `${i * 55}ms` }}>
                       <div className="opacity-0 group-hover:opacity-100 absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-1 py-0.5 rounded-2xs pointer-events-none">
-                        {h * 2}
+                        {point.value * 2}
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-200">
-                  <span>06:00</span>
-                  <span>12:00</span>
-                  <span>18:00</span>
+                  {trend.filter((_, i) => i === 0 || i === trend.length - 1 || i === Math.floor(trend.length / 2)).map((point) => <span key={point.label}>{point.label}</span>)}
                 </div>
               </div>
 
@@ -159,6 +180,7 @@ export const DashboardPage: React.FC = () => {
 
       {/* Recent Detections */}
       <Card
+        className="ss-fade-up [animation-delay:320ms]"
         title="Recent Vehicle Detections"
         subtitle="Latest estimated speed measurements from active sessions"
         action={
