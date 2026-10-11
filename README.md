@@ -17,6 +17,7 @@ SpeedSight is a browser-based vehicle speed monitoring and traffic analytics pla
   - IoU (Intersection over Union) frame-to-frame vehicle tracking ID association.
   - Controlled throttled detection loop (~15 FPS) preventing UI rendering blockages and overlapping model inferences.
   - Clear separation between Real CV Data and Demo Mode results.
+- **Operator dashboard UX:** Navy/cyan visual hierarchy, reduced-motion-safe transitions, animated detection preview details, and accessible 6h/12h/24h traffic trend controls.
 - *Disclaimer: SpeedSight measurements are estimated calculations for analytics purposes and are NOT legally certified speed enforcement.*
 
 ## Autonomous Development
