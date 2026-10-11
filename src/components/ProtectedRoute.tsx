@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
 import { Activity } from 'lucide-react';
+import { getSessionCheckMessage } from '../features/auth/sessionState';
 
 export const ProtectedRoute: React.FC = () => {
   const { user, isLoading, error, retry } = useAuth();
@@ -24,7 +25,7 @@ export const ProtectedRoute: React.FC = () => {
         <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-100 p-8 text-center" role="alert">
           <div className="space-y-4 max-w-md bg-slate-800 p-6 rounded-xl border border-slate-700">
             <h2 className="text-lg font-bold text-white">Session Check Warning</h2>
-            <p className="text-sm text-slate-400">Unable to check your authentication session. Please check your network connection and try again.</p>
+            <p className="text-sm text-slate-400">{getSessionCheckMessage(error)}</p>
             <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition" onClick={retry}>
               Retry Session Check
             </button>

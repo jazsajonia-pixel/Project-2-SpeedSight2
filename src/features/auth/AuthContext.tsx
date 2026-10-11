@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthUser, authApi } from '../../services/auth';
+import { isUnauthenticatedSessionError } from './sessionState';
 
 export const CURRENT_USER_KEY = ['current-user'] as const;
 
@@ -20,7 +21,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const client = useQueryClient();
   const query = useQuery({
     queryKey: CURRENT_USER_KEY,
-    queryFn: ({ signal }) => authApi.getCurrentUser(signal),
+    queryFn: async ({ signal }) => {
+      try {
+        return await authApi.getCurrentUser(signal);
+      } catch (error) {
+        if (isUnauthenticatedSessionError(error)) return null;
+        throw error;
+      }
+    },
     retry: false,
     refetchInterval: 60_000,
     refetchOnWindowFocus: 'always',
