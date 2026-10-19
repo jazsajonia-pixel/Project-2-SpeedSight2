@@ -2,52 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { getMonitoringReadiness } from './monitoringReadiness';
 
 describe('getMonitoringReadiness', () => {
-  it('blocks camera monitoring while the model is loading', () => {
-    expect(getMonitoringReadiness({
-      sourceMode: 'CAMERA',
-      modelReady: false,
-      modelLoading: true,
-      videoSelected: false,
-    })).toMatchObject({
-      canStart: false,
-      label: 'Loading Model…',
-    });
+  it('blocks camera analysis while the model is loading', () => {
+    expect(getMonitoringReadiness({ sourceMode: 'CAMERA', modelReady: false, modelLoading: true, videoSelected: false })).toMatchObject({ canStart: false, label: 'Loading model…' });
   });
 
-  it('blocks video monitoring until a file is selected', () => {
-    expect(getMonitoringReadiness({
-      sourceMode: 'VIDEO',
-      modelReady: true,
-      modelLoading: false,
-      videoSelected: false,
-    })).toMatchObject({
-      canStart: false,
-      label: 'Select Video First',
-    });
+  it('blocks all sources when the model is unavailable', () => {
+    expect(getMonitoringReadiness({ sourceMode: 'CAMERA', modelReady: false, modelLoading: false, videoSelected: false })).toMatchObject({ canStart: false, label: 'Model unavailable' });
   });
 
-  it('allows a ready camera or selected video source to start', () => {
-    expect(getMonitoringReadiness({
-      sourceMode: 'CAMERA',
-      modelReady: true,
-      modelLoading: false,
-      videoSelected: false,
-    }).canStart).toBe(true);
-
-    expect(getMonitoringReadiness({
-      sourceMode: 'VIDEO',
-      modelReady: true,
-      modelLoading: false,
-      videoSelected: true,
-    }).canStart).toBe(true);
+  it('requires a selected file before video analysis', () => {
+    expect(getMonitoringReadiness({ sourceMode: 'VIDEO', modelReady: true, modelLoading: false, videoSelected: false })).toMatchObject({ canStart: false, label: 'Choose a video' });
   });
 
-  it('keeps demo mode independent from the computer-vision model', () => {
-    expect(getMonitoringReadiness({
-      sourceMode: 'DEMO',
-      modelReady: false,
-      modelLoading: true,
-      videoSelected: false,
-    })).toEqual({ canStart: true, label: 'Start Monitoring', reason: null });
+  it('allows camera or video analysis when the model and source are ready', () => {
+    expect(getMonitoringReadiness({ sourceMode: 'CAMERA', modelReady: true, modelLoading: false, videoSelected: false }).canStart).toBe(true);
+    expect(getMonitoringReadiness({ sourceMode: 'VIDEO', modelReady: true, modelLoading: false, videoSelected: true }).canStart).toBe(true);
   });
 });
