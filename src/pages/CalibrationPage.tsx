@@ -1,93 +1,49 @@
 import React from 'react';
-import { Sliders, CheckCircle, Info } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Camera, CircleHelp } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
 
-export const CalibrationPage: React.FC = () => {
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Distance & Perspective Calibration"
-        subtitle="Establish physical road distance markers to calculate accurate estimated vehicle speed."
-        badge={<Badge variant="info">Calibration Shell</Badge>}
-      />
+const steps = [
+  { number: '1', title: 'Choose a fixed camera view', text: 'Keep the camera still. Use a view where the road surface and the vehicle path are clearly visible.' },
+  { number: '2', title: 'Mark two points on the road', text: 'Choose points A and B along the same lane and on the same road plane. Measure the real distance between those points.' },
+  { number: '3', title: 'Measure crossing time', text: 'For one vehicle, record the time it takes to travel from A to B. The timer must use timestamps from the same video or camera.' },
+  { number: '4', title: 'Calculate and validate', text: 'Speed = distance ÷ time. Repeat with a known test or reference before trusting any result.' },
+];
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Interactive Overlay Preview Canvas */}
-        <div className="lg:col-span-2">
-          <Card title="Calibration Canvas Preview" subtitle="Define physical road markers (A & B)">
-            <div className="relative aspect-video bg-slate-950 rounded-xl overflow-hidden flex flex-col justify-between p-4 border border-slate-800">
-              {/* Distance Line Indicator */}
-              <div className="absolute inset-0 flex items-center justify-center p-8 pointer-events-none">
-                <div className="w-3/4 border-b-2 border-dashed border-amber-400 relative flex items-center justify-between">
-                  <div className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-bold text-[10px] flex items-center justify-center -top-2 relative">
-                    A
-                  </div>
-                  <div className="bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-bold text-xs">
-                    50.0 FT (KNOWN DISTANCE)
-                  </div>
-                  <div className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-bold text-[10px] flex items-center justify-center -top-2 relative">
-                    B
-                  </div>
-                </div>
-              </div>
+export const CalibrationPage: React.FC = () => (
+  <div className="space-y-6">
+    <PageHeader title="Understand calibration" subtitle="Calibration connects distances and timestamps in a fixed camera view. It does not make a camera-based estimate automatically accurate." badge={<Badge variant="neutral">Guide · not configured</Badge>} actions={<Link to="/monitoring"><Button size="sm" icon={<Camera className="h-4 w-4" />}>Open monitoring</Button></Link>} />
 
-              <div className="text-center py-16 z-10">
-                <Sliders className="w-10 h-10 text-slate-700 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-slate-300">
-                  Interactive Calibration Canvas Placeholder
-                </p>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  Drag markers A and B on camera stream to set pixel-to-distance ratio.
-                </p>
-              </div>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="space-y-6 lg:col-span-2">
+        <Card title="How calibration works" subtitle="A practical sequence for understanding the measurement." >
+          <ol className="space-y-5">{steps.map((step) => <li key={step.number} className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800">{step.number}</span><div><h3 className="font-semibold text-slate-900">{step.title}</h3><p className="mt-1 text-sm leading-6 text-slate-600">{step.text}</p></div></li>)}</ol>
+        </Card>
+        <Card title="Worked example" subtitle="Illustration only — these are not measured values from your camera.">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 text-center">
+            <p className="text-sm text-slate-600">If A and B are <strong>15 metres</strong> apart and a vehicle takes <strong>0.75 seconds</strong> to travel between them:</p>
+            <p className="mt-3 font-mono text-lg font-bold text-slate-900">15 m ÷ 0.75 s = 20 m/s = 72 km/h</p>
+            <p className="mt-2 text-xs text-slate-500">Small distance or timing errors can change the estimated speed considerably.</p>
+          </div>
+        </Card>
+      </div>
 
-              <div className="flex justify-between items-center text-xs text-slate-400 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 z-10">
-                <span>Calibration Status: Pre-calibrated (Default Profile)</span>
-                <span className="font-mono text-emerald-400">Ratio: 12.4 px/ft</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Calibration Settings */}
-        <div className="space-y-4">
-          <Card title="Distance Configuration">
-            <div className="space-y-4">
-              <Input label="Known Distance" defaultValue="50" type="number" />
-              <Select
-                label="Measurement Unit"
-                options={[
-                  { label: 'Feet (ft)', value: 'ft' },
-                  { label: 'Meters (m)', value: 'm' },
-                ]}
-              />
-              <Button size="sm" className="w-full" icon={<CheckCircle className="w-4 h-4" />}>
-                Save Calibration
-              </Button>
-            </div>
-          </Card>
-
-          <Card title="Advanced Perspective Correction">
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 space-y-2">
-              <div className="flex items-center gap-1.5 font-semibold text-slate-900">
-                <Info className="w-4 h-4 text-blue-600" />
-                <span>4-Point Polygon Warping</span>
-              </div>
-              <p>
-                Perspective transformation compensates for camera angle inclination on high-mounted camera poles.
-              </p>
-              <Button variant="outline" size="sm" disabled className="w-full mt-2">
-                Configure 4-Point Polygon (Phase 5)
-              </Button>
-            </div>
-          </Card>
-        </div>
+      <div className="space-y-6">
+        <Card title="What is supported today">
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" /><p><strong>Not connected to speed results yet.</strong> The current vision pipeline detects and tracks vehicles. It does not yet use a saved calibration to calculate their speed.</p></div>
+          <p className="mt-4 text-sm leading-6 text-slate-600">The old “default ratio” display was not backed by a saved profile and has been removed. There is no active calibration to apply.</p>
+        </Card>
+        <Card title="Why camera angle matters">
+          <div className="space-y-3 text-sm leading-6 text-slate-600"><p>In a perspective view, the same real-world distance occupies fewer pixels farther from the camera. A single pixels-per-metre ratio is only a rough scale for a small, consistent road region.</p><p>Wide/high-angle views generally need perspective correction using known ground-plane points. That correction is not implemented here.</p></div>
+        </Card>
+        <Card title="Before using measurements">
+          <div className="flex items-start gap-3"><CircleHelp className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" /><p className="text-sm leading-6 text-slate-600">Use a stable camera, measure reference distances carefully, validate timing and compare results against a trusted reference. SpeedSight is for exploratory analytics, not enforcement.</p></div>
+          <Link to="/monitoring" className="mt-4 inline-flex"><Button variant="outline" size="sm" icon={<ArrowRight className="h-4 w-4" />}>Review live detections</Button></Link>
+        </Card>
       </div>
     </div>
-  );
-};
+  </div>
+);

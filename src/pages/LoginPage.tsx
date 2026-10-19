@@ -54,7 +54,7 @@ export const LoginPage: React.FC = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="operator@speedsight.local"
+            placeholder="name@example.com"
             icon={<Mail className="w-4 h-4" />}
             required
           />

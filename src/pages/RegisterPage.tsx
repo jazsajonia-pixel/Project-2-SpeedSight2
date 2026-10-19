@@ -50,7 +50,7 @@ export const RegisterPage: React.FC = () => {
             <Activity className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-extrabold text-white">Create SpeedSight Account</h1>
-          <p className="text-xs text-slate-400">Register to start monitoring vehicle speed analytics.</p>
+          <p className="text-xs text-slate-400">Register to analyze vehicle detections from a camera or local video.</p>
         </div>
 
         {error && (
@@ -76,7 +76,7 @@ export const RegisterPage: React.FC = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="operator@speedsight.local"
+            placeholder="name@example.com"
             icon={<Mail className="w-4 h-4" />}
             required
           />

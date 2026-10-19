@@ -2,7 +2,7 @@
 
 SpeedSight is a browser-based traffic analytics project for reviewing vehicle detections, monitoring sessions, camera profiles, and reports. Its computer-vision foundation processes a local camera stream or video file in the browser, keeping the media on the device rather than uploading it to the server.
 
-The current baseline combines a React and TypeScript interface with a Hono API and PostgreSQL persistence. Measurements are estimates for analysis and are **not certified for legal speed enforcement**.
+The current baseline combines a React and TypeScript interface with a Hono API and PostgreSQL persistence. Vehicle detection and tracking are available in the browser; calibrated speed measurement is **not yet connected** and must not be used for legal enforcement.
 
 ---
 
@@ -17,10 +17,11 @@ The current baseline combines a React and TypeScript interface with a Hono API a
   - Local video file playback support for offline testing without server file uploads.
   - Multi-class vehicle detection (`car`/`sedan`, `truck`, `bus`, `motorcycle`) with real model confidence scores and bounding boxes.
   - IoU (Intersection over Union) frame-to-frame vehicle tracking ID association.
-  - Controlled throttled detection loop (~15 FPS) preventing UI rendering blockages and overlapping model inferences.
-  - Clear separation between Real CV Data and Demo Mode results.
-- **Operator dashboard UX:** Navy/cyan visual hierarchy, reduced-motion-safe transitions, animated detection preview details, and accessible 6h/12h/24h traffic trend controls.
-- *Disclaimer: SpeedSight measurements are estimated calculations for analytics purposes and are NOT legally certified speed enforcement.*
+  - Controlled, throttled detection loop (default target 10 FPS) with a configurable minimum confidence score.
+  - Live bounding boxes, fullscreen preview, local frame capture, and CSV export of currently tracked vehicles.
+  - Dashboard, session, detection, camera profile and report screens show saved records or honest empty states; simulated fixture data and public demo mode have been removed.
+- **Calibration guidance:** Explains reference distances, crossing time, perspective limitations and a worked example. Calibration is not yet wired into speed output.
+- *Disclaimer: Vehicle recognition can miss or misclassify vehicles. SpeedSight does not currently provide calibrated speed measurement and is NOT certified for legal speed enforcement.*
 
 ## Autonomous Development
 
